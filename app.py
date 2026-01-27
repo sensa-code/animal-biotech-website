@@ -19,8 +19,17 @@ CORS(app, supports_credentials=True)
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
+# 啟動時印出連線資訊（隱藏密碼）
+if DATABASE_URL:
+    _parsed = urlparse(DATABASE_URL)
+    print(f"資料庫連線: {_parsed.scheme}://{_parsed.username}:***@{_parsed.hostname}:{_parsed.port}/{_parsed.path.lstrip('/')}")
+else:
+    print("警告: DATABASE_URL 環境變數未設定！")
+
 def get_db():
     """取得資料庫連線"""
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL 環境變數未設定")
     conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     return conn
 
