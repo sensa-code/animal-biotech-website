@@ -6,7 +6,7 @@
     <title>後台管理 - 上弦動物生技</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,22 +15,23 @@
         }
 
         :root {
-            --primary: #0f4c3a;
-            --primary-light: #1a7a5e;
-            --accent: #d4af37;
+            --primary: oklch(0.55 0.15 50);
+            --primary-light: oklch(0.6 0.14 50);
+            --accent: oklch(0.75 0.12 65);
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --bg-cream: #faf8f5;
+            --bg-cream: oklch(0.97 0.01 70);
+            --bg-card: oklch(0.99 0.005 70);
             --bg-white: #ffffff;
-            --text-dark: #1a1a1a;
-            --text-muted: #6b7280;
-            --border: #e5e2db;
+            --text-dark: oklch(0.25 0.03 50);
+            --text-muted: oklch(0.5 0.02 50);
+            --border: oklch(0.88 0.02 70);
         }
 
         body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background: #f3f4f6;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background: var(--bg-cream);
             min-height: 100vh;
             color: var(--text-dark);
         }
@@ -42,10 +43,11 @@
             top: 0;
             bottom: 0;
             width: 260px;
-            background: var(--primary);
-            color: white;
+            background: var(--bg-card);
+            color: var(--text-dark);
             padding: 24px;
             z-index: 100;
+            border-right: 1px solid var(--border);
         }
 
         .sidebar-logo {
@@ -53,14 +55,14 @@
             align-items: center;
             gap: 12px;
             padding-bottom: 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--border);
             margin-bottom: 24px;
         }
 
         .sidebar-logo-icon {
             width: 40px;
             height: 40px;
-            background: rgba(255,255,255,0.15);
+            background: oklch(0.55 0.15 50 / 0.1);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -68,14 +70,15 @@
         }
 
         .sidebar-logo-icon svg {
-            width: 24px;
-            height: 24px;
-            fill: white;
+            width: 26px;
+            height: 26px;
+            fill: var(--primary);
         }
 
         .sidebar-logo-text {
             font-size: 18px;
             font-weight: 600;
+            color: var(--text-dark);
         }
 
         .nav-item {
@@ -83,16 +86,22 @@
             align-items: center;
             gap: 12px;
             padding: 12px 16px;
-            border-radius: 8px;
-            color: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            color: var(--text-muted);
             text-decoration: none;
             margin-bottom: 8px;
             transition: all 0.2s;
+            font-weight: 500;
         }
 
-        .nav-item:hover, .nav-item.active {
-            background: rgba(255,255,255,0.1);
-            color: white;
+        .nav-item:hover {
+            background: oklch(0.55 0.15 50 / 0.06);
+            color: var(--text-dark);
+        }
+
+        .nav-item.active {
+            background: oklch(0.55 0.15 50 / 0.1);
+            color: var(--primary);
         }
 
         .nav-item svg {
@@ -116,10 +125,11 @@
         }
 
         .stat-card {
-            background: white;
-            border-radius: 12px;
+            background: var(--bg-card);
+            border-radius: 16px;
             padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 3px oklch(0.5 0.02 50 / 0.06);
+            border: 1px solid var(--border);
         }
 
         .stat-label {
@@ -127,6 +137,7 @@
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 500;
         }
 
         .stat-value {
@@ -154,15 +165,16 @@
             width: 100%;
             padding: 12px 16px 12px 44px;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 15px;
-            background: white;
+            background: var(--bg-card);
+            transition: all 0.2s;
         }
 
         .search-box input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.1);
+            box-shadow: 0 0 0 3px oklch(0.55 0.15 50 / 0.1);
         }
 
         .search-box svg {
@@ -180,7 +192,7 @@
             align-items: center;
             gap: 8px;
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
@@ -200,10 +212,11 @@
 
         .btn-primary:hover {
             background: var(--primary-light);
+            box-shadow: 0 4px 12px oklch(0.55 0.15 50 / 0.2);
         }
 
         .btn-secondary {
-            background: white;
+            background: var(--bg-card);
             color: var(--text-dark);
             border: 1px solid var(--border);
         }
@@ -228,9 +241,10 @@
 
         /* 資料表格 */
         .table-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px oklch(0.5 0.02 50 / 0.06);
+            border: 1px solid var(--border);
             overflow: hidden;
         }
 
@@ -245,7 +259,7 @@
         }
 
         th {
-            background: var(--bg-cream);
+            background: oklch(0.95 0.01 70);
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
@@ -255,12 +269,12 @@
         }
 
         td {
-            border-bottom: 1px solid #f3f4f6;
+            border-bottom: 1px solid oklch(0.94 0.005 70);
             font-size: 14px;
         }
 
         tr:hover {
-            background: #fafafa;
+            background: oklch(0.97 0.005 70);
         }
 
         .code-cell {
@@ -278,7 +292,7 @@
         .btn-icon {
             width: 32px;
             height: 32px;
-            border-radius: 6px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             display: flex;
@@ -316,7 +330,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 16px;
-            border-top: 1px solid #f3f4f6;
+            border-top: 1px solid oklch(0.94 0.005 70);
         }
 
         .pagination-info {
@@ -332,7 +346,7 @@
         .page-btn {
             padding: 8px 14px;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             background: white;
             font-size: 14px;
             cursor: pointer;
@@ -360,7 +374,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: oklch(0.25 0.03 50 / 0.4);
             z-index: 200;
             align-items: center;
             justify-content: center;
@@ -371,8 +385,9 @@
         }
 
         .modal {
-            background: white;
-            border-radius: 16px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border);
             width: 100%;
             max-width: 500px;
             max-height: 90vh;
@@ -402,6 +417,7 @@
         .modal-title {
             font-size: 18px;
             font-weight: 600;
+            letter-spacing: -0.025em;
         }
 
         .modal-close {
@@ -410,14 +426,14 @@
             border: none;
             background: none;
             cursor: pointer;
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .modal-close:hover {
-            background: #f3f4f6;
+            background: oklch(0.94 0.005 70);
         }
 
         .modal-close svg {
@@ -446,15 +462,17 @@
             width: 100%;
             padding: 12px 14px;
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 15px;
             transition: all 0.2s;
+            background: var(--bg-cream);
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(15, 76, 58, 0.1);
+            background: white;
+            box-shadow: 0 0 0 3px oklch(0.55 0.15 50 / 0.1);
         }
 
         .modal-footer {
@@ -468,7 +486,7 @@
         /* 批次上傳 */
         .upload-zone {
             border: 2px dashed var(--border);
-            border-radius: 12px;
+            border-radius: 16px;
             padding: 40px;
             text-align: center;
             cursor: pointer;
@@ -477,7 +495,7 @@
 
         .upload-zone:hover {
             border-color: var(--primary);
-            background: rgba(15, 76, 58, 0.02);
+            background: oklch(0.55 0.15 50 / 0.02);
         }
 
         .upload-zone svg {
@@ -514,7 +532,7 @@
         .empty-state svg {
             width: 64px;
             height: 64px;
-            fill: #d1d5db;
+            fill: oklch(0.8 0.01 50);
             margin-bottom: 16px;
         }
 
@@ -532,10 +550,11 @@
         }
 
         .toast {
-            background: white;
-            border-radius: 8px;
+            background: var(--bg-card);
+            border-radius: 12px;
             padding: 16px 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px oklch(0.5 0.02 50 / 0.12);
+            border: 1px solid var(--border);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -577,6 +596,31 @@
             fill: var(--danger);
         }
 
+        /* Sidebar bottom section */
+        .sidebar-bottom {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+
+        .sidebar-bottom-info {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-bottom .nav-item {
+            width: 100%;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            background: oklch(0.55 0.15 50 / 0.06);
+        }
+
+        .sidebar-bottom .nav-item:hover {
+            background: oklch(0.55 0.15 50 / 0.1);
+        }
+
         /* RWD */
         @media (max-width: 768px) {
             .sidebar {
@@ -594,8 +638,14 @@
     <aside class="sidebar">
         <div class="sidebar-logo">
             <div class="sidebar-logo-icon">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="58" rx="32" ry="26"/>
+                    <circle cx="50" cy="30" r="18"/>
+                    <ellipse cx="34" cy="16" rx="6" ry="12" transform="rotate(-15 34 16)"/>
+                    <ellipse cx="66" cy="16" rx="6" ry="12" transform="rotate(15 66 16)"/>
+                    <circle cx="43" cy="28" r="3" fill="white"/>
+                    <circle cx="57" cy="28" r="3" fill="white"/>
+                    <ellipse cx="50" cy="35" rx="4" ry="2.5" fill="white"/>
                 </svg>
             </div>
             <span class="sidebar-logo-text">上弦動物生技</span>
@@ -616,11 +666,11 @@
             </a>
         </nav>
 
-        <div style="position: absolute; bottom: 24px; left: 24px; right: 24px;">
-            <div style="color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 12px;">
+        <div class="sidebar-bottom">
+            <div class="sidebar-bottom-info">
                 登入帳號：<span id="adminUsername">admin</span>
             </div>
-            <button onclick="logout()" class="nav-item" style="width: 100%; border: none; cursor: pointer; background: rgba(255,255,255,0.1);">
+            <button onclick="logout()" class="nav-item">
                 <svg viewBox="0 0 24 24">
                     <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
                 </svg>
@@ -898,11 +948,11 @@
             const start = (page - 1) * per_page + 1;
             const end = Math.min(page * per_page, total);
 
-            document.getElementById('paginationInfo').textContent = 
+            document.getElementById('paginationInfo').textContent =
                 total > 0 ? `顯示 ${start} - ${end} 筆，共 ${total} 筆` : '沒有資料';
 
             let buttons = '';
-            
+
             buttons += `<button class="page-btn" onclick="goToPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>上一頁</button>`;
 
             for (let i = 1; i <= total_pages; i++) {
@@ -971,7 +1021,7 @@
             };
 
             // 驗證
-            if (!productData.product_code || !productData.product_name || 
+            if (!productData.product_code || !productData.product_name ||
                 !productData.hospital_name || !productData.purchase_date) {
                 showToast('請填寫所有必填欄位', 'error');
                 return;
@@ -1058,7 +1108,7 @@
             try {
                 const text = await file.text();
                 const lines = text.split('\n').filter(line => line.trim());
-                
+
                 // 跳過標題行
                 const products = [];
                 for (let i = 1; i < lines.length; i++) {
@@ -1118,8 +1168,8 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            
-            const icon = type === 'success' 
+
+            const icon = type === 'success'
                 ? '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
                 : '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>';
 

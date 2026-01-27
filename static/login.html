@@ -6,7 +6,7 @@
     <title>管理員登入 - 產品驗證系統</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -15,46 +15,79 @@
         }
 
         :root {
-            --primary: #0f4c3a;
-            --primary-light: #1a7a5e;
-            --accent: #d4af37;
+            --primary: oklch(0.55 0.15 50);
+            --primary-light: oklch(0.6 0.14 50);
+            --accent: oklch(0.75 0.12 65);
             --danger: #ef4444;
-            --bg-cream: #faf8f5;
-            --text-dark: #1a1a1a;
-            --text-muted: #6b7280;
-            --border: #e5e2db;
+            --bg-cream: oklch(0.97 0.01 70);
+            --bg-card: oklch(0.99 0.005 70);
+            --text-dark: oklch(0.25 0.03 50);
+            --text-muted: oklch(0.5 0.02 50);
+            --border: oklch(0.88 0.02 70);
         }
 
         body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background: linear-gradient(135deg, #0f4c3a 0%, #1a7a5e 100%);
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background: var(--bg-cream);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 100%;
-            max-width: 420px;
+            position: relative;
             overflow: hidden;
         }
 
+        /* Decorative blur circles */
+        .bg-decoration {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-decoration-1 {
+            width: 400px;
+            height: 400px;
+            background: oklch(0.8 0.1 60);
+            top: -100px;
+            right: -100px;
+        }
+
+        .bg-decoration-2 {
+            width: 300px;
+            height: 300px;
+            background: oklch(0.85 0.08 40);
+            bottom: -50px;
+            left: -80px;
+        }
+
+        .login-container {
+            background: var(--bg-card);
+            border-radius: 20px;
+            box-shadow: 0 1px 3px oklch(0.5 0.02 50 / 0.06), 0 8px 32px oklch(0.5 0.02 50 / 0.08);
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
         .login-header {
-            background: var(--primary);
-            color: white;
+            background: oklch(0.55 0.15 50 / 0.08);
+            color: var(--text-dark);
             padding: 40px 32px;
             text-align: center;
+            border-bottom: 1px solid var(--border);
         }
 
         .login-logo {
             width: 64px;
             height: 64px;
-            background: rgba(255,255,255,0.15);
+            background: oklch(0.55 0.15 50 / 0.1);
             border-radius: 16px;
             display: flex;
             align-items: center;
@@ -63,20 +96,22 @@
         }
 
         .login-logo svg {
-            width: 36px;
-            height: 36px;
-            fill: white;
+            width: 40px;
+            height: 40px;
+            fill: var(--primary);
         }
 
         .login-title {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 8px;
+            letter-spacing: -0.025em;
+            color: var(--text-dark);
         }
 
         .login-subtitle {
             font-size: 14px;
-            opacity: 0.8;
+            color: var(--text-muted);
         }
 
         .login-form {
@@ -99,20 +134,22 @@
             width: 100%;
             padding: 14px 16px;
             border: 2px solid var(--border);
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 15px;
             transition: all 0.2s;
             font-family: inherit;
+            background: var(--bg-cream);
         }
 
         .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(15, 76, 58, 0.1);
+            background: white;
+            box-shadow: 0 0 0 4px oklch(0.55 0.15 50 / 0.1);
         }
 
         .form-input::placeholder {
-            color: #aaa;
+            color: oklch(0.7 0.01 50);
         }
 
         .btn-login {
@@ -121,7 +158,7 @@
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -132,6 +169,7 @@
         .btn-login:hover {
             background: var(--primary-light);
             transform: translateY(-1px);
+            box-shadow: 0 8px 24px oklch(0.55 0.15 50 / 0.25);
         }
 
         .btn-login:active {
@@ -181,11 +219,21 @@
     </style>
 </head>
 <body>
+    <!-- Decorative background circles -->
+    <div class="bg-decoration bg-decoration-1"></div>
+    <div class="bg-decoration bg-decoration-2"></div>
+
     <div class="login-container">
         <div class="login-header">
             <div class="login-logo">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="50" cy="58" rx="32" ry="26"/>
+                    <circle cx="50" cy="30" r="18"/>
+                    <ellipse cx="34" cy="16" rx="6" ry="12" transform="rotate(-15 34 16)"/>
+                    <ellipse cx="66" cy="16" rx="6" ry="12" transform="rotate(15 66 16)"/>
+                    <circle cx="43" cy="28" r="3" fill="white"/>
+                    <circle cx="57" cy="28" r="3" fill="white"/>
+                    <ellipse cx="50" cy="35" rx="4" ry="2.5" fill="white"/>
                 </svg>
             </div>
             <h1 class="login-title">管理員登入</h1>
