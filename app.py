@@ -21,7 +21,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
 def get_db():
     """取得資料庫連線"""
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
     return conn
 
 def init_db():
@@ -473,7 +473,12 @@ def get_stats():
 os.makedirs('static', exist_ok=True)
 
 # 初始化資料庫（部署時也會執行）
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"資料庫初始化失敗: {e}")
+    print(f"DATABASE_URL 是否設定: {'是' if DATABASE_URL else '否'}")
+    raise
 
 if __name__ == '__main__':
     # 啟動伺服器
