@@ -428,28 +428,42 @@ def batch_add_products():
     success_count = 0
     errors = []
 
-    for i, product in enumerate(products):
-        try:
-            cursor.execute('SAVEPOINT sp_%s' % i)
-            cursor.execute('''
-                INSERT INTO products (product_code, product_name, hospital_name, purchase_date)
-                VALUES (%s, %s, %s, %s)
-            ''', (
-                product['product_code'].upper(),
-                product['product_name'],
-                product['hospital_name'],
-                product['purchase_date']
-            ))
-            cursor.execute('RELEASE SAVEPOINT sp_%s' % i)
-            success_count += 1
-        except psycopg2.IntegrityError:
-            cursor.execute('ROLLBACK TO SAVEPOINT sp_%s' % i)
-            errors.append(f"第 {i+1} 筆: 編碼 {product['product_code']} 已存在")
-        except KeyError as e:
-            errors.append(f"第 {i+1} 筆: 缺少欄位 {e}")
+    try:
+        for i, product in enumerate(products):
+            try:
+                sp_name = f'sp_{i}'
+                cursor.execute(f'SAVEPOINT {sp_name}')
+                cursor.execute('''
+                    INSERT INTO products (product_code, product_name, hospital_name, purchase_date)
+                    VALUES (%s, %s, %s, %s)
+                ''', (
+                    product['product_code'].upper(),
+                    product['product_name'],
+                    product['hospital_name'],
+                    product['purchase_date']
+                ))
+                cursor.execute(f'RELEASE SAVEPOINT {sp_name}')
+                success_count += 1
+            except psycopg2.IntegrityError:
+                cursor.execute(f'ROLLBACK TO SAVEPOINT {sp_name}')
+                errors.append(f"第 {i+1} 筆: 編碼 {product.get('product_code', '?')} 已存在")
+            except KeyError as e:
+                errors.append(f"第 {i+1} 筆: 缺少欄位 {e}")
+            except Exception as e:
+                print(f"[BATCH ERROR] 第 {i+1} 筆錯誤: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+                errors.append(f"第 {i+1} 筆: {str(e)}")
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    except Exception as e:
+        print(f"[BATCH ERROR] 批次新增失敗: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        conn.rollback()
+        conn.close()
+        return jsonify({
+            'success': False,
+            'message': f'批次新增失敗: {str(e)}'
+        }), 500
+    finally:
+        conn.close()
     
     return jsonify({
         'success': True,
