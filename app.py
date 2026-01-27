@@ -1,26 +1,27 @@
 """
 產品驗證查詢系統 - 後端 API
-使用 Flask + SQLite
+使用 Flask + PostgreSQL
 """
 
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import os
 from datetime import datetime
+from urllib.parse import urlparse
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 CORS(app, supports_credentials=True)
 
-DATABASE = 'products.db'
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
 def get_db():
     """取得資料庫連線"""
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 def init_db():
@@ -31,13 +32,13 @@ def init_db():
     # 建立產品資料表
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             product_code TEXT UNIQUE NOT NULL,
             product_name TEXT NOT NULL,
             hospital_name TEXT NOT NULL,
             purchase_date DATE NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
@@ -49,10 +50,10 @@ def init_db():
     # 建立管理員資料表
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS admins (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
 
@@ -62,7 +63,7 @@ def init_db():
         default_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
         password_hash = generate_password_hash(default_password)
         cursor.execute(
-            'INSERT INTO admins (username, password_hash) VALUES (?, ?)',
+            'INSERT INTO admins (username, password_hash) VALUES (%s, %s)',
             ('admin', password_hash)
         )
         print(f"已建立預設管理員帳號: admin")
@@ -113,8 +114,8 @@ def api_login():
         return jsonify({'success': False, 'message': '請輸入帳號和密碼'}), 400
 
     conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, password_hash FROM admins WHERE username = ?', (username,))
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor.execute('SELECT id, password_hash FROM admins WHERE username = %s', (username,))
     admin = cursor.fetchone()
     conn.close()
 
@@ -148,18 +149,21 @@ def verify_product(product_code):
     GET /api/verify/{product_code}
     """
     conn = get_db()
-    cursor = conn.cursor()
-    
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
     cursor.execute('''
-        SELECT product_code, product_name, hospital_name, purchase_date 
-        FROM products 
-        WHERE UPPER(product_code) = UPPER(?)
+        SELECT product_code, product_name, hospital_name, purchase_date
+        FROM products
+        WHERE UPPER(product_code) = UPPER(%s)
     ''', (product_code,))
-    
+
     product = cursor.fetchone()
     conn.close()
-    
+
     if product:
+        purchase_date = product['purchase_date']
+        if hasattr(purchase_date, 'isoformat'):
+            purchase_date = purchase_date.isoformat()
         return jsonify({
             'success': True,
             'verified': True,
@@ -167,7 +171,7 @@ def verify_product(product_code):
                 'product_code': product['product_code'],
                 'product_name': product['product_name'],
                 'hospital_name': product['hospital_name'],
-                'purchase_date': product['purchase_date']
+                'purchase_date': purchase_date
             }
         })
     else:
@@ -191,36 +195,43 @@ def get_all_products():
     search = request.args.get('search', '', type=str)
     
     conn = get_db()
-    cursor = conn.cursor()
-    
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
     offset = (page - 1) * per_page
-    
+
     if search:
         # 搜尋產品編碼、名稱或醫院
         search_pattern = f'%{search}%'
         cursor.execute('''
-            SELECT COUNT(*) FROM products 
-            WHERE product_code LIKE ? OR product_name LIKE ? OR hospital_name LIKE ?
+            SELECT COUNT(*) FROM products
+            WHERE product_code ILIKE %s OR product_name ILIKE %s OR hospital_name ILIKE %s
         ''', (search_pattern, search_pattern, search_pattern))
-        total = cursor.fetchone()[0]
-        
+        total = cursor.fetchone()['count']
+
         cursor.execute('''
-            SELECT * FROM products 
-            WHERE product_code LIKE ? OR product_name LIKE ? OR hospital_name LIKE ?
+            SELECT * FROM products
+            WHERE product_code ILIKE %s OR product_name ILIKE %s OR hospital_name ILIKE %s
             ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
+            LIMIT %s OFFSET %s
         ''', (search_pattern, search_pattern, search_pattern, per_page, offset))
     else:
         cursor.execute('SELECT COUNT(*) FROM products')
-        total = cursor.fetchone()[0]
-        
+        total = cursor.fetchone()['count']
+
         cursor.execute('''
-            SELECT * FROM products 
+            SELECT * FROM products
             ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
+            LIMIT %s OFFSET %s
         ''', (per_page, offset))
-    
-    products = [dict(row) for row in cursor.fetchall()]
+
+    rows = cursor.fetchall()
+    products = []
+    for row in rows:
+        product = dict(row)
+        for key in ('purchase_date', 'created_at', 'updated_at'):
+            if key in product and hasattr(product[key], 'isoformat'):
+                product[key] = product[key].isoformat()
+        products.append(product)
     conn.close()
     
     return jsonify({
@@ -254,28 +265,30 @@ def add_product():
     
     conn = get_db()
     cursor = conn.cursor()
-    
+
     try:
         cursor.execute('''
             INSERT INTO products (product_code, product_name, hospital_name, purchase_date)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
+            RETURNING id
         ''', (
             data['product_code'].upper(),
             data['product_name'],
             data['hospital_name'],
             data['purchase_date']
         ))
+        product_id = cursor.fetchone()[0]
         conn.commit()
-        product_id = cursor.lastrowid
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'message': '產品新增成功',
             'id': product_id
         }), 201
-        
-    except sqlite3.IntegrityError:
+
+    except psycopg2.IntegrityError:
+        conn.rollback()
         conn.close()
         return jsonify({
             'success': False,
@@ -293,21 +306,21 @@ def update_product(product_id):
     
     conn = get_db()
     cursor = conn.cursor()
-    
+
     # 檢查產品是否存在
-    cursor.execute('SELECT id FROM products WHERE id = ?', (product_id,))
+    cursor.execute('SELECT id FROM products WHERE id = %s', (product_id,))
     if not cursor.fetchone():
         conn.close()
         return jsonify({
             'success': False,
             'message': '找不到該產品'
         }), 404
-    
+
     # 檢查新編碼是否與其他產品重複
     if data.get('product_code'):
         cursor.execute('''
-            SELECT id FROM products 
-            WHERE UPPER(product_code) = UPPER(?) AND id != ?
+            SELECT id FROM products
+            WHERE UPPER(product_code) = UPPER(%s) AND id != %s
         ''', (data['product_code'], product_id))
         if cursor.fetchone():
             conn.close()
@@ -315,34 +328,34 @@ def update_product(product_id):
                 'success': False,
                 'message': '產品編碼已被其他產品使用'
             }), 409
-    
+
     # 更新資料
     update_fields = []
     update_values = []
-    
+
     if data.get('product_code'):
-        update_fields.append('product_code = ?')
+        update_fields.append('product_code = %s')
         update_values.append(data['product_code'].upper())
     if data.get('product_name'):
-        update_fields.append('product_name = ?')
+        update_fields.append('product_name = %s')
         update_values.append(data['product_name'])
     if data.get('hospital_name'):
-        update_fields.append('hospital_name = ?')
+        update_fields.append('hospital_name = %s')
         update_values.append(data['hospital_name'])
     if data.get('purchase_date'):
-        update_fields.append('purchase_date = ?')
+        update_fields.append('purchase_date = %s')
         update_values.append(data['purchase_date'])
-    
-    update_fields.append('updated_at = ?')
+
+    update_fields.append('updated_at = %s')
     update_values.append(datetime.now().isoformat())
     update_values.append(product_id)
-    
+
     cursor.execute(f'''
-        UPDATE products 
+        UPDATE products
         SET {', '.join(update_fields)}
-        WHERE id = ?
+        WHERE id = %s
     ''', update_values)
-    
+
     conn.commit()
     conn.close()
     
@@ -360,16 +373,16 @@ def delete_product(product_id):
     """
     conn = get_db()
     cursor = conn.cursor()
-    
-    cursor.execute('SELECT id FROM products WHERE id = ?', (product_id,))
+
+    cursor.execute('SELECT id FROM products WHERE id = %s', (product_id,))
     if not cursor.fetchone():
         conn.close()
         return jsonify({
             'success': False,
             'message': '找不到該產品'
         }), 404
-    
-    cursor.execute('DELETE FROM products WHERE id = ?', (product_id,))
+
+    cursor.execute('DELETE FROM products WHERE id = %s', (product_id,))
     conn.commit()
     conn.close()
     
@@ -397,27 +410,30 @@ def batch_add_products():
     
     conn = get_db()
     cursor = conn.cursor()
-    
+
     success_count = 0
     errors = []
-    
+
     for i, product in enumerate(products):
         try:
+            cursor.execute('SAVEPOINT sp_%s' % i)
             cursor.execute('''
                 INSERT INTO products (product_code, product_name, hospital_name, purchase_date)
-                VALUES (?, ?, ?, ?)
+                VALUES (%s, %s, %s, %s)
             ''', (
                 product['product_code'].upper(),
                 product['product_name'],
                 product['hospital_name'],
                 product['purchase_date']
             ))
+            cursor.execute('RELEASE SAVEPOINT sp_%s' % i)
             success_count += 1
-        except sqlite3.IntegrityError:
+        except psycopg2.IntegrityError:
+            cursor.execute('ROLLBACK TO SAVEPOINT sp_%s' % i)
             errors.append(f"第 {i+1} 筆: 編碼 {product['product_code']} 已存在")
         except KeyError as e:
             errors.append(f"第 {i+1} 筆: 缺少欄位 {e}")
-    
+
     conn.commit()
     conn.close()
     
