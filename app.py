@@ -10,6 +10,7 @@ from functools import wraps
 import psycopg2
 import psycopg2.extras
 import os
+import sys
 from datetime import datetime
 from urllib.parse import urlparse
 
@@ -30,8 +31,12 @@ def get_db():
     """取得資料庫連線"""
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL 環境變數未設定")
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    return conn
+    try:
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        return conn
+    except Exception as e:
+        print(f"[DB ERROR] 連線失敗: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
+        raise
 
 def init_db():
     """初始化資料庫"""
