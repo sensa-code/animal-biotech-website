@@ -415,45 +415,54 @@ def batch_add_products():
     """
     data = request.get_json()
     products = data.get('products', [])
-    
+
     if not products:
         return jsonify({
             'success': False,
             'message': '沒有提供產品資料'
         }), 400
-    
+
+    # 先在 Python 端驗證資料，減少無效的資料庫請求
+    valid_products = []
+    errors = []
+    for i, product in enumerate(products):
+        try:
+            valid_products.append((
+                product['product_code'].upper(),
+                product['product_name'],
+                product['hospital_name'],
+                product['purchase_date']
+            ))
+        except KeyError as e:
+            errors.append(f"第 {i+1} 筆: 缺少欄位 {e}")
+
+    if not valid_products:
+        return jsonify({
+            'success': False,
+            'message': '沒有有效的產品資料',
+            'errors': errors
+        }), 400
+
     conn = get_db()
     cursor = conn.cursor()
 
-    success_count = 0
-    errors = []
-
     try:
-        for i, product in enumerate(products):
-            try:
-                sp_name = f'sp_{i}'
-                cursor.execute(f'SAVEPOINT {sp_name}')
-                cursor.execute('''
-                    INSERT INTO products (product_code, product_name, hospital_name, purchase_date)
-                    VALUES (%s, %s, %s, %s)
-                ''', (
-                    product['product_code'].upper(),
-                    product['product_name'],
-                    product['hospital_name'],
-                    product['purchase_date']
-                ))
-                cursor.execute(f'RELEASE SAVEPOINT {sp_name}')
-                success_count += 1
-            except psycopg2.IntegrityError:
-                cursor.execute(f'ROLLBACK TO SAVEPOINT {sp_name}')
-                errors.append(f"第 {i+1} 筆: 編碼 {product.get('product_code', '?')} 已存在")
-            except KeyError as e:
-                errors.append(f"第 {i+1} 筆: 缺少欄位 {e}")
-            except Exception as e:
-                print(f"[BATCH ERROR] 第 {i+1} 筆錯誤: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
-                errors.append(f"第 {i+1} 筆: {str(e)}")
-
+        # 使用 ON CONFLICT 一次批次插入，跳過重複的編碼
+        psycopg2.extras.execute_values(
+            cursor,
+            '''INSERT INTO products (product_code, product_name, hospital_name, purchase_date)
+               VALUES %s
+               ON CONFLICT (product_code) DO NOTHING''',
+            valid_products,
+            page_size=500
+        )
+        success_count = cursor.rowcount
+        duplicate_count = len(valid_products) - success_count
         conn.commit()
+
+        if duplicate_count > 0:
+            errors.append(f"{duplicate_count} 筆編碼已存在，已略過")
+
     except Exception as e:
         print(f"[BATCH ERROR] 批次新增失敗: {type(e).__name__}: {e}", file=sys.stderr, flush=True)
         conn.rollback()
@@ -464,10 +473,10 @@ def batch_add_products():
         }), 500
     finally:
         conn.close()
-    
+
     return jsonify({
         'success': True,
-        'message': f'成功新增 {success_count} 筆，失敗 {len(errors)} 筆',
+        'message': f'成功新增 {success_count} 筆，略過 {duplicate_count} 筆重複',
         'success_count': success_count,
         'errors': errors
     })
