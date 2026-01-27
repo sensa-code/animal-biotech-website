@@ -1086,6 +1086,11 @@
 
                 const data = await response.json();
 
+                if (!response.ok) {
+                    resultDiv.innerHTML = `<p style="color: var(--danger);">上傳失敗：${escapeHtml(data.message || '伺服器錯誤')}</p>`;
+                    return;
+                }
+
                 let html = `<p style="color: var(--success);">成功匯入 ${data.success_count} 筆資料</p>`;
                 if (data.errors && data.errors.length > 0) {
                     html += `<p style="color: var(--danger); margin-top: 10px;">失敗 ${data.errors.length} 筆：</p>`;

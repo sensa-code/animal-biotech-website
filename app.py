@@ -445,6 +445,8 @@ def batch_add_products():
 
     conn = get_db()
     cursor = conn.cursor()
+    success_count = 0
+    duplicate_count = 0
 
     try:
         # 使用 ON CONFLICT 一次批次插入，跳過重複的編碼
