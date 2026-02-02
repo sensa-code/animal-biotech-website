@@ -32,7 +32,7 @@ export function CTASection({ settings }: { settings?: Record<string, string> }) 
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="#contact"
+              href="/contact"
               className="group inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background text-sm tracking-widest uppercase hover:bg-accent transition-all duration-300"
             >
               聯繫我們

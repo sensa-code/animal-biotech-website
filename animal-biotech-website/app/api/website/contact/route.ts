@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { query } from '@/lib/db'
+import { submitContactForm } from '@/lib/queries'
 
 export async function POST(request: Request) {
   try {
@@ -13,14 +13,14 @@ export async function POST(request: Request) {
       )
     }
 
-    await query(
-      'INSERT INTO contact_submissions (name, email, phone, company, message) VALUES ($1, $2, $3, $4, $5)',
-      [name, email, phone || null, company || null, message]
-    )
+    await submitContactForm({ name, email, phone, company, message })
 
     return NextResponse.json({ success: true, message: '感謝您的來信，我們將盡快回覆' })
   } catch (error) {
     console.error('Failed to submit contact form:', error)
-    return NextResponse.json({ success: false, message: '提交失敗，請稍後再試' }, { status: 500 })
+    const message = error instanceof Error && error.message === 'Database not configured'
+      ? '系統尚未設定資料庫，請聯繫管理員'
+      : '提交失敗，請稍後再試'
+    return NextResponse.json({ success: false, message }, { status: 500 })
   }
 }

@@ -1,45 +1,71 @@
-import { query } from './db'
+import { supabaseAdmin } from './supabase'
 
 export async function getSiteSettings() {
-  const result = await query('SELECT key, value FROM site_settings')
+  if (!supabaseAdmin) return {}
+  const { data, error } = await supabaseAdmin
+    .from('site_settings')
+    .select('key, value')
+  if (error || !data) return {}
   const settings: Record<string, string> = {}
-  for (const row of result.rows) {
+  for (const row of data) {
     settings[row.key] = row.value
   }
   return settings
 }
 
 export async function getHeroContent() {
-  const result = await query(
-    'SELECT * FROM hero_content WHERE is_active = true ORDER BY sort_order LIMIT 1'
-  )
-  return result.rows[0] || null
+  if (!supabaseAdmin) return null
+  const { data, error } = await supabaseAdmin
+    .from('hero_content')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order')
+    .limit(1)
+    .single()
+  if (error || !data) return null
+  return data
 }
 
 export async function getStats() {
-  const result = await query(
-    'SELECT value, suffix, label FROM stats WHERE is_active = true ORDER BY sort_order'
-  )
-  return result.rows
+  if (!supabaseAdmin) return []
+  const { data, error } = await supabaseAdmin
+    .from('stats')
+    .select('value, suffix, label')
+    .eq('is_active', true)
+    .order('sort_order')
+  if (error || !data) return []
+  return data
 }
 
 export async function getProductCategories() {
-  const result = await query(
-    'SELECT id, slug, icon_name, title, subtitle, description, hero_image FROM product_categories WHERE is_active = true ORDER BY sort_order'
-  )
-  return result.rows
+  if (!supabaseAdmin) return []
+  const { data, error } = await supabaseAdmin
+    .from('product_categories')
+    .select('id, slug, icon_name, title, subtitle, description, hero_image')
+    .eq('is_active', true)
+    .order('sort_order')
+  if (error || !data) return []
+  return data
 }
 
 export async function getProductsByCategory(categorySlug: string) {
-  const result = await query(
-    `SELECT p.id, p.slug, p.name, p.model, p.description, p.features, p.specs, p.image, p.is_highlighted
-     FROM products p
-     JOIN product_categories c ON p.category_id = c.id
-     WHERE c.slug = $1 AND p.is_active = true
-     ORDER BY p.sort_order`,
-    [categorySlug]
-  )
-  return result.rows
+  if (!supabaseAdmin) return []
+  // First get category id
+  const { data: cat } = await supabaseAdmin
+    .from('product_categories')
+    .select('id')
+    .eq('slug', categorySlug)
+    .single()
+  if (!cat) return []
+
+  const { data, error } = await supabaseAdmin
+    .from('products')
+    .select('id, slug, name, model, description, features, specs, image, is_highlighted')
+    .eq('category_id', cat.id)
+    .eq('is_active', true)
+    .order('sort_order')
+  if (error || !data) return []
+  return data
 }
 
 export async function getAllProductsGrouped() {
@@ -55,24 +81,88 @@ export async function getAllProductsGrouped() {
 }
 
 export async function getFeaturedProducts() {
-  const result = await query(
-    `SELECT fp.id, fp.category_label, fp.badge_text, fp.highlight_text,
-            p.slug, p.name, p.description
-     FROM featured_products fp
-     JOIN products p ON fp.product_id = p.id
-     WHERE fp.is_active = true
-     ORDER BY fp.sort_order`
-  )
-  return result.rows
+  if (!supabaseAdmin) return []
+  const { data, error } = await supabaseAdmin
+    .from('featured_products')
+    .select(`
+      id, category_label, badge_text, highlight_text, sort_order,
+      products!inner(slug, name, description)
+    `)
+    .eq('is_active', true)
+    .order('sort_order')
+  if (error || !data) return []
+
+  // Flatten the joined data
+  return data.map((fp: Record<string, unknown>) => {
+    const product = fp.products as Record<string, unknown>
+    return {
+      id: fp.id,
+      category_label: fp.category_label,
+      badge_text: fp.badge_text,
+      highlight_text: fp.highlight_text,
+      slug: product.slug,
+      name: product.name,
+      description: product.description,
+    }
+  })
+}
+
+export async function getProductBySlug(slug: string) {
+  if (!supabaseAdmin) return null
+  const { data, error } = await supabaseAdmin
+    .from('products')
+    .select(`
+      id, slug, name, model, description, features, specs, image, is_highlighted,
+      product_categories!inner(title, subtitle, slug, icon_name)
+    `)
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .limit(1)
+    .single()
+  if (error || !data) return null
+
+  const cat = data.product_categories as Record<string, unknown>
+  return {
+    ...data,
+    product_categories: undefined,
+    category_title: cat.title,
+    category_subtitle: cat.subtitle,
+    category_slug: cat.slug,
+    category_icon: cat.icon_name,
+  }
 }
 
 export async function getNews() {
-  const result = await query(
-    `SELECT id, title, summary, published_at
-     FROM news
-     WHERE is_published = true
-     ORDER BY published_at DESC
-     LIMIT 10`
-  )
-  return result.rows
+  if (!supabaseAdmin) return []
+  const { data, error } = await supabaseAdmin
+    .from('news')
+    .select('id, title, summary, published_at')
+    .eq('is_published', true)
+    .order('published_at', { ascending: false })
+    .limit(10)
+  if (error || !data) return []
+  return data
+}
+
+// Contact form submission
+export async function submitContactForm(formData: {
+  name: string
+  email: string
+  phone?: string
+  company?: string
+  message: string
+}) {
+  if (!supabaseAdmin) {
+    throw new Error('Database not configured')
+  }
+  const { error } = await supabaseAdmin
+    .from('contact_submissions')
+    .insert({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || null,
+      company: formData.company || null,
+      message: formData.message,
+    })
+  if (error) throw error
 }

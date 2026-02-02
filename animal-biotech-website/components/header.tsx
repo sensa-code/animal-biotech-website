@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { label: "關於上弦", href: "#about" },
-  { label: "產品服務", href: "#products" },
-  { label: "主打產品", href: "#featured" },
-  { label: "聯絡我們", href: "#contact" },
+  { label: "關於上弦", href: "/about" },
+  { label: "產品服務", href: "/products" },
+  { label: "聯絡我們", href: "/contact" },
 ]
 
 export function Header() {
@@ -74,12 +73,14 @@ export function Header() {
 
           {/* CTA Button */}
           <div className="hidden lg:flex items-center gap-4">
-            <Button
-              variant="outline"
-              className="border-foreground/30 text-foreground hover:bg-foreground hover:text-background tracking-widest text-xs uppercase px-6 bg-transparent"
-            >
-              聯繫我們
-            </Button>
+            <Link href="/contact">
+              <Button
+                variant="outline"
+                className="border-foreground/30 text-foreground hover:bg-foreground hover:text-background tracking-widest text-xs uppercase px-6 bg-transparent"
+              >
+                聯繫我們
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -112,12 +113,14 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          <Button
-            variant="outline"
-            className="mt-4 border-foreground/30 text-foreground hover:bg-foreground hover:text-background tracking-widest text-xs uppercase bg-transparent"
-          >
-            聯繫我們
-          </Button>
+          <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button
+              variant="outline"
+              className="mt-4 w-full border-foreground/30 text-foreground hover:bg-foreground hover:text-background tracking-widest text-xs uppercase bg-transparent"
+            >
+              聯繫我們
+            </Button>
+          </Link>
         </nav>
       </div>
     </header>

@@ -17,10 +17,9 @@ const defaultSettings: Record<string, string> = {
 }
 
 const companyLinks = [
-  { label: "關於上弦", href: "#about" },
-  { label: "產品服務", href: "#products" },
-  { label: "主打產品", href: "#featured" },
-  { label: "聯絡我們", href: "#contact" },
+  { label: "關於上弦", href: "/about" },
+  { label: "產品服務", href: "/products" },
+  { label: "聯絡我們", href: "/contact" },
 ]
 
 export function Footer({
@@ -31,7 +30,13 @@ export function Footer({
   categories?: CategoryData[]
 }) {
   const s = settings && Object.keys(settings).length > 0 ? settings : defaultSettings
-  const cats = categories && categories.length > 0 ? categories : []
+  const defaultCategories: CategoryData[] = [
+    { slug: "diagnostic", title: "診斷設備" },
+    { slug: "rapid", title: "快篩試劑" },
+    { slug: "wound", title: "傷口護理" },
+    { slug: "surgical", title: "手術耗材" },
+  ]
+  const cats = categories && categories.length > 0 ? categories : defaultCategories
 
   const contactLinks = [
     { label: s.phone, href: `tel:${s.phone}` },
@@ -108,7 +113,7 @@ export function Footer({
               {cats.map((cat) => (
                 <li key={cat.slug}>
                   <Link
-                    href="#products"
+                    href={`/products?category=${cat.slug}`}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {cat.title}

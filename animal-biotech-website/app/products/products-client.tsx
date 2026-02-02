@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import {
   Activity,
@@ -40,7 +42,19 @@ interface Category {
 }
 
 export function ProductsPageClient({ categories }: { categories: Category[] }) {
-  const [activeCategory, setActiveCategory] = useState<string>(categories[0]?.id || "diagnostic")
+  const searchParams = useSearchParams()
+  const initialCategory = searchParams.get("category") || categories[0]?.id || "diagnostic"
+  const [activeCategory, setActiveCategory] = useState<string>(
+    categories.find((c) => c.id === initialCategory) ? initialCategory : categories[0]?.id || "diagnostic"
+  )
+
+  useEffect(() => {
+    const cat = searchParams.get("category")
+    if (cat && categories.find((c) => c.id === cat)) {
+      setActiveCategory(cat)
+    }
+  }, [searchParams, categories])
+
   const currentCategory = categories.find((c) => c.id === activeCategory) || categories[0]
 
   if (!currentCategory) return null
@@ -157,9 +171,11 @@ export function ProductsPageClient({ categories }: { categories: Category[] }) {
                         </span>
                       </div>
 
-                      <h3 className="font-serif text-2xl md:text-3xl text-foreground mb-4 group-hover:text-accent transition-colors">
-                        {product.name}
-                      </h3>
+                      <Link href={`/products/${product.id}`}>
+                        <h3 className="font-serif text-2xl md:text-3xl text-foreground mb-4 group-hover:text-accent transition-colors">
+                          {product.name}
+                        </h3>
+                      </Link>
 
                       <p className="text-muted-foreground leading-relaxed mb-8 max-w-2xl">
                         {product.description}
@@ -191,13 +207,22 @@ export function ProductsPageClient({ categories }: { categories: Category[] }) {
                         ))}
                       </dl>
 
-                      <button
-                        type="button"
-                        className="mt-8 inline-flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors group/btn"
-                      >
-                        <span>詢問產品</span>
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
-                      </button>
+                      <div className="mt-8 flex flex-col gap-3">
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="inline-flex items-center gap-2 text-sm text-foreground hover:text-accent transition-colors group/btn"
+                        >
+                          <span>查看詳情</span>
+                          <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                        </Link>
+                        <Link
+                          href="/contact"
+                          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors group/btn"
+                        >
+                          <span>詢問產品</span>
+                          <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -217,18 +242,18 @@ export function ProductsPageClient({ categories }: { categories: Category[] }) {
             我們的專業團隊隨時為您服務，歡迎來電或來信洽詢
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="tel:02-2600-8387"
+            <Link
+              href="/contact"
               className="inline-flex items-center gap-3 px-8 py-4 bg-foreground text-background text-sm tracking-widest uppercase hover:bg-accent transition-all duration-300"
             >
-              立即來電
+              聯繫我們
               <ChevronRight className="w-4 h-4" />
-            </a>
+            </Link>
             <a
-              href="mailto:service@senbio.tech"
+              href="tel:02-2600-8387"
               className="inline-flex items-center justify-center px-8 py-4 border border-foreground/30 text-foreground text-sm tracking-widest uppercase hover:border-foreground hover:bg-foreground/5 transition-all duration-300"
             >
-              發送郵件
+              立即來電
             </a>
           </div>
         </div>

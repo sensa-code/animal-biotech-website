@@ -18,9 +18,9 @@ const defaultHero: HeroData = {
   subtitle: "Professional Veterinary Solutions",
   description: "上弦動物生技以獸醫師的角度為出發點，提供動物醫院完善的檢測設備、滅菌服務及醫療耗材，致力打造更優質的動物醫療環境。",
   cta_primary_text: "主打產品",
-  cta_primary_link: "#featured",
+  cta_primary_link: "/products",
   cta_secondary_text: "了解更多",
-  cta_secondary_link: "#about",
+  cta_secondary_link: "/about",
 }
 
 export function HeroSection({ hero }: { hero?: HeroData | null }) {

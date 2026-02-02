@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { ArrowUpRight } from "lucide-react"
 
 interface FeaturedProduct {
@@ -75,9 +76,10 @@ export function ProductsSection({ featured }: { featured?: FeaturedProduct[] }) 
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
           {data.map((item, index) => (
-            <article
+            <Link
               key={item.id}
-              className="group relative p-8 lg:p-10 bg-card border border-border hover:border-accent/50 transition-all duration-500 cursor-pointer"
+              href={`/products/${item.slug}`}
+              className="group relative p-8 lg:p-10 bg-card border border-border hover:border-accent/50 transition-all duration-500 cursor-pointer block"
             >
               <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
                 <div className="absolute top-2 right-2 w-3 h-3 border-t border-r border-accent/0 group-hover:border-accent transition-colors duration-500" />
@@ -106,7 +108,7 @@ export function ProductsSection({ featured }: { featured?: FeaturedProduct[] }) 
               <span className="absolute bottom-4 right-4 font-serif text-6xl text-foreground/5 group-hover:text-accent/10 transition-colors duration-500">
                 0{index + 1}
               </span>
-            </article>
+            </Link>
           ))}
         </div>
       </div>
