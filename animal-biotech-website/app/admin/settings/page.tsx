@@ -18,6 +18,8 @@ const SETTING_LABELS: Record<string, { label: string; description: string; type:
   email: { label: '電子信箱', description: '主要聯絡信箱', type: 'email' },
   address: { label: '公司地址', description: '實體地址', type: 'text' },
   business_hours: { label: '營業時間', description: '服務時間說明', type: 'text' },
+  website_url: { label: '網站網址', description: '公司網站連結', type: 'url' },
+  company_description: { label: '公司描述', description: '網站描述文字', type: 'text' },
   line_id: { label: 'LINE ID', description: 'LINE 官方帳號', type: 'text' },
   facebook_url: { label: 'Facebook', description: 'Facebook 粉絲頁連結', type: 'url' },
   instagram_url: { label: 'Instagram', description: 'Instagram 帳號連結', type: 'url' },
@@ -40,10 +42,20 @@ export default function SettingsPage() {
       const data = await res.json()
 
       if (data.success) {
-        setSettings(data.data)
+        // Convert object format to array format
+        // API returns: { key: { id, value }, ... }
+        const settingsArray: Setting[] = Object.entries(data.data).map(([key, val]: [string, any]) => ({
+          id: val.id,
+          key,
+          value: val.value,
+          description: null,
+        }))
+
+        setSettings(settingsArray)
+
         // Initialize edited values
         const values: Record<string, string> = {}
-        data.data.forEach((s: Setting) => {
+        settingsArray.forEach((s: Setting) => {
           values[s.key] = s.value
         })
         setEditedValues(values)
@@ -131,10 +143,10 @@ export default function SettingsPage() {
 
   // Group settings by category
   const basicSettings = settings.filter(s =>
-    ['company_name', 'company_name_en', 'copyright_text'].includes(s.key)
+    ['company_name', 'company_name_en', 'company_description', 'copyright_text'].includes(s.key)
   )
   const contactSettings = settings.filter(s =>
-    ['phone', 'fax', 'email', 'address', 'business_hours'].includes(s.key)
+    ['phone', 'fax', 'email', 'address', 'business_hours', 'website_url'].includes(s.key)
   )
   const socialSettings = settings.filter(s =>
     ['line_id', 'facebook_url', 'instagram_url'].includes(s.key)
@@ -224,12 +236,14 @@ export default function SettingsPage() {
       </div>
 
       {/* Social Media */}
-      <div className="rounded-xl bg-[oklch(0.16_0.01_240)] border border-[oklch(0.22_0.02_240)] p-6">
-        <h2 className="text-lg font-semibold text-[oklch(0.95_0.01_90)] mb-4">社群媒體</h2>
-        <div className="space-y-4">
-          {socialSettings.map(renderSettingInput)}
+      {socialSettings.length > 0 && (
+        <div className="rounded-xl bg-[oklch(0.16_0.01_240)] border border-[oklch(0.22_0.02_240)] p-6">
+          <h2 className="text-lg font-semibold text-[oklch(0.95_0.01_90)] mb-4">社群媒體</h2>
+          <div className="space-y-4">
+            {socialSettings.map(renderSettingInput)}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
