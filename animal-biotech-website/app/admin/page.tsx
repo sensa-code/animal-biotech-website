@@ -1,30 +1,26 @@
-import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-server'
 import { Package, FolderTree, Newspaper, MessageSquare } from 'lucide-react'
 
 async function getStats() {
-  const supabase = await createClient()
+  const supabase = await createAdminClient()
 
-  // Get counts using the website schema
+  // Get counts using the website schema (already configured in createAdminClient)
   const { count: productsCount } = await supabase
     .from('products')
     .select('*', { count: 'exact', head: true })
-    .schema('website')
 
   const { count: categoriesCount } = await supabase
     .from('product_categories')
     .select('*', { count: 'exact', head: true })
-    .schema('website')
 
   const { count: newsCount } = await supabase
     .from('news')
     .select('*', { count: 'exact', head: true })
-    .schema('website')
 
   const { count: contactsCount } = await supabase
     .from('contact_submissions')
     .select('*', { count: 'exact', head: true })
     .eq('is_read', false)
-    .schema('website')
 
   return {
     products: productsCount || 0,
@@ -115,14 +111,14 @@ export default async function AdminDashboard() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <a
-            href="/admin/products?new=true"
+            href="/admin/products/new"
             className="flex items-center gap-3 p-4 rounded-lg bg-[oklch(0.20_0.01_240)] hover:bg-[oklch(0.24_0.01_240)] transition-colors"
           >
             <Package className="w-5 h-5 text-[oklch(0.70_0.08_160)]" />
             <span className="text-sm text-[oklch(0.85_0.01_90)]">新增產品</span>
           </a>
           <a
-            href="/admin/news?new=true"
+            href="/admin/news/new"
             className="flex items-center gap-3 p-4 rounded-lg bg-[oklch(0.20_0.01_240)] hover:bg-[oklch(0.24_0.01_240)] transition-colors"
           >
             <Newspaper className="w-5 h-5 text-[oklch(0.70_0.10_50)]" />
