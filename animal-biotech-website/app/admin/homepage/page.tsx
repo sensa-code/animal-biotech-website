@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Save, Loader2, Upload, X } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 
 interface HeroContent {
   id: number
@@ -21,6 +22,7 @@ interface Stat {
 }
 
 export default function HomepagePage() {
+  const { toast } = useToast()
   const [hero, setHero] = useState<HeroContent | null>(null)
   const [stats, setStats] = useState<Stat[]>([])
   const [loading, setLoading] = useState(true)
@@ -86,12 +88,24 @@ export default function HomepagePage() {
 
       if (data.success) {
         setHeroForm(prev => ({ ...prev, background_image: data.url }))
+        toast({
+          title: '上傳成功',
+          description: '背景圖片已更新',
+        })
       } else {
-        alert(data.message || '上傳失敗')
+        toast({
+          title: '上傳失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('上傳失敗')
+      toast({
+        title: '上傳失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setUploading(false)
     }
@@ -111,13 +125,24 @@ export default function HomepagePage() {
       const data = await res.json()
 
       if (data.success) {
-        alert('Hero 內容已儲存')
+        toast({
+          title: '儲存成功',
+          description: 'Hero 大海報內容已更新',
+        })
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSavingHero(false)
     }
@@ -150,13 +175,24 @@ export default function HomepagePage() {
       const data = await res.json()
 
       if (data.success) {
-        alert('統計數據已儲存')
+        toast({
+          title: '儲存成功',
+          description: '統計數據已更新',
+        })
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSavingStats(false)
     }

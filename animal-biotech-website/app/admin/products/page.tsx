@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Pencil, Trash2, Search, Loader2 } from 'lucide-react'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
+import { useToast } from '@/hooks/use-toast'
+import { useDebounce } from '@/hooks/use-debounce'
+import { ProductListSkeleton } from '@/components/admin/loading-skeleton'
 
 interface Category {
   id: number
@@ -31,6 +35,17 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [deleting, setDeleting] = useState<number | null>(null)
 
+  // Dialog state
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    product: Product | null
+  }>({ open: false, product: null })
+
+  const { toast } = useToast()
+
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(search, 300)
+
   useEffect(() => {
     fetchData()
   }, [])
@@ -49,27 +64,50 @@ export default function ProductsPage() {
       if (categoriesData.success) setCategories(categoriesData.data)
     } catch (error) {
       console.error('Error fetching data:', error)
+      toast({
+        title: '載入失敗',
+        description: '無法載入產品資料，請重新整理頁面',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('確定要刪除此產品嗎？')) return
+  const handleDeleteClick = (product: Product) => {
+    setDeleteDialog({ open: true, product })
+  }
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.product) return
+
+    const id = deleteDialog.product.id
     setDeleting(id)
+
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: 'DELETE' })
       const data = await res.json()
 
       if (data.success) {
         setProducts(products.filter((p) => p.id !== id))
+        toast({
+          title: '刪除成功',
+          description: `已成功刪除產品「${deleteDialog.product.name}」`,
+        })
       } else {
-        alert(data.message || '刪除失敗')
+        toast({
+          title: '刪除失敗',
+          description: data.message || '無法刪除產品，請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Error deleting product:', error)
-      alert('刪除失敗')
+      toast({
+        title: '刪除失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setDeleting(null)
     }
@@ -77,9 +115,9 @@ export default function ProductsPage() {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      !search ||
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.model?.toLowerCase().includes(search.toLowerCase())
+      !debouncedSearch ||
+      product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      product.model?.toLowerCase().includes(debouncedSearch.toLowerCase())
 
     const matchesCategory =
       !categoryFilter || product.product_categories.id === parseInt(categoryFilter)
@@ -89,8 +127,14 @@ export default function ProductsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.70_0.08_160)]" />
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">產品列表</h1>
+            <p className="text-[oklch(0.60_0.01_240)] mt-1">載入中...</p>
+          </div>
+        </div>
+        <ProductListSkeleton />
       </div>
     )
   }
@@ -217,13 +261,15 @@ export default function ProductsPage() {
                       <Link
                         href={`/admin/products/${product.id}`}
                         className="p-2 rounded-lg hover:bg-[oklch(0.24_0.01_240)] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.90_0.01_90)] transition-colors"
+                        title="編輯產品"
                       >
                         <Pencil className="w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDeleteClick(product)}
                         disabled={deleting === product.id}
                         className="p-2 rounded-lg hover:bg-[oklch(0.40_0.15_25)/0.15] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.70_0.15_25)] transition-colors disabled:opacity-50"
+                        title="刪除產品"
                       >
                         {deleting === product.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -239,6 +285,18 @@ export default function ProductsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, product: open ? deleteDialog.product : null })}
+        title="確定要刪除此產品？"
+        description="刪除後將無法恢復，請確認是否要繼續。"
+        itemName={deleteDialog.product?.name}
+        confirmText="確認刪除"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

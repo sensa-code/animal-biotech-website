@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2, Upload, X } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Upload, X, AlertCircle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface NewsItem {
   id: number
@@ -19,6 +21,7 @@ interface NewsItem {
 export default function EditNewsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -34,6 +37,15 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
     published_at: '',
   })
 
+  // Track original form data for unsaved changes detection
+  const originalFormRef = useRef<typeof form | null>(null)
+  const hasUnsavedChanges = originalFormRef.current
+    ? JSON.stringify(form) !== JSON.stringify(originalFormRef.current)
+    : false
+
+  // Warn before leaving if has unsaved changes
+  useUnsavedChanges(hasUnsavedChanges)
+
   useEffect(() => {
     fetchNews()
   }, [id])
@@ -45,7 +57,7 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
 
       if (data.success) {
         const news: NewsItem = data.data
-        setForm({
+        const formData = {
           title: news.title || '',
           slug: news.slug || '',
           excerpt: news.excerpt || '',
@@ -53,7 +65,9 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
           image: news.image || '',
           is_published: news.is_published,
           published_at: news.published_at || '',
-        })
+        }
+        setForm(formData)
+        originalFormRef.current = formData
       } else {
         setNotFound(true)
       }
@@ -86,6 +100,30 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast({
+        title: '檔案過大',
+        description: '圖片檔案大小不能超過 5MB',
+        variant: 'destructive',
+      })
+      e.target.value = ''
+      return
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: '不支援的格式',
+        description: '僅支援 JPG、PNG、WebP 格式的圖片',
+        variant: 'destructive',
+      })
+      e.target.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const formData = new FormData()
@@ -100,12 +138,24 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
 
       if (data.success) {
         setForm(prev => ({ ...prev, image: data.url }))
+        toast({
+          title: '上傳成功',
+          description: '圖片已上傳',
+        })
       } else {
-        alert(data.message || '上傳失敗')
+        toast({
+          title: '上傳失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('上傳失敗')
+      toast({
+        title: '上傳失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setUploading(false)
     }
@@ -115,7 +165,11 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
     e.preventDefault()
 
     if (!form.title.trim()) {
-      alert('請填寫標題')
+      toast({
+        title: '請填寫標題',
+        description: '消息標題為必填欄位',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -134,13 +188,25 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
       const data = await res.json()
 
       if (data.success) {
+        toast({
+          title: '儲存成功',
+          description: '消息已更新',
+        })
         router.push('/admin/news')
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -179,10 +245,16 @@ export default function EditNewsPage({ params }: { params: Promise<{ id: string 
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">編輯消息</h1>
           <p className="text-[oklch(0.60_0.01_240)] mt-1">修改消息內容</p>
         </div>
+        {hasUnsavedChanges && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[oklch(0.50_0.15_50)/0.15] text-[oklch(0.80_0.15_50)]">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">有未儲存的變更</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

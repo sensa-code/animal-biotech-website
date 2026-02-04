@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Loader2, X, Check } from 'lucide-react'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
+import { useToast } from '@/hooks/use-toast'
+import { CategoryListSkeleton } from '@/components/admin/loading-skeleton'
 
 interface Category {
   id: number
@@ -20,6 +23,14 @@ export default function CategoriesPage() {
   const [deleting, setDeleting] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [showNewForm, setShowNewForm] = useState(false)
+
+  // Delete dialog state
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    category: Category | null
+  }>({ open: false, category: null })
+
+  const { toast } = useToast()
 
   const [editForm, setEditForm] = useState({
     title: '',
@@ -50,6 +61,11 @@ export default function CategoriesPage() {
       }
     } catch (error) {
       console.error('Error fetching categories:', error)
+      toast({
+        title: '載入失敗',
+        description: '無法載入分類資料',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -82,7 +98,11 @@ export default function CategoriesPage() {
 
   const handleSaveEdit = async () => {
     if (!editForm.title.trim()) {
-      alert('請輸入分類名稱')
+      toast({
+        title: '請填寫必要欄位',
+        description: '分類名稱為必填項目',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -100,38 +120,71 @@ export default function CategoriesPage() {
           c.id === editingId ? { ...c, ...editForm } : c
         ))
         cancelEdit()
+        toast({
+          title: '儲存成功',
+          description: '分類資料已更新',
+        })
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '無法儲存分類資料',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
   }
 
-  const handleDelete = async (id: number, productsCount?: number) => {
-    if (productsCount && productsCount > 0) {
-      alert(`此分類下有 ${productsCount} 個產品，無法刪除`)
+  const handleDeleteClick = (category: Category) => {
+    if (category.products_count && category.products_count > 0) {
+      toast({
+        title: '無法刪除',
+        description: `此分類下有 ${category.products_count} 個產品，請先移除或重新分類這些產品`,
+        variant: 'destructive',
+      })
       return
     }
+    setDeleteDialog({ open: true, category })
+  }
 
-    if (!confirm('確定要刪除此分類嗎？')) return
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog.category) return
 
+    const id = deleteDialog.category.id
     setDeleting(id)
+
     try {
       const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
       const data = await res.json()
 
       if (data.success) {
         setCategories(categories.filter(c => c.id !== id))
+        toast({
+          title: '刪除成功',
+          description: `已成功刪除分類「${deleteDialog.category.title}」`,
+        })
       } else {
-        alert(data.message || '刪除失敗')
+        toast({
+          title: '刪除失敗',
+          description: data.message || '無法刪除分類',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Delete error:', error)
-      alert('刪除失敗')
+      toast({
+        title: '刪除失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setDeleting(null)
     }
@@ -139,7 +192,11 @@ export default function CategoriesPage() {
 
   const handleCreateNew = async () => {
     if (!newForm.title.trim()) {
-      alert('請輸入分類名稱')
+      toast({
+        title: '請填寫必要欄位',
+        description: '分類名稱為必填項目',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -159,12 +216,24 @@ export default function CategoriesPage() {
         setCategories([...categories, data.data])
         setShowNewForm(false)
         setNewForm({ title: '', slug: '', description: '', icon: '', sort_order: 0 })
+        toast({
+          title: '新增成功',
+          description: `已成功新增分類「${newForm.title}」`,
+        })
       } else {
-        alert(data.message || '新增失敗')
+        toast({
+          title: '新增失敗',
+          description: data.message || '無法新增分類',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Create error:', error)
-      alert('新增失敗')
+      toast({
+        title: '新增失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -172,8 +241,14 @@ export default function CategoriesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.70_0.08_160)]" />
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">分類管理</h1>
+            <p className="text-[oklch(0.60_0.01_240)] mt-1">載入中...</p>
+          </div>
+        </div>
+        <CategoryListSkeleton />
       </div>
     )
   }
@@ -203,7 +278,7 @@ export default function CategoriesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-[oklch(0.70_0.01_240)] mb-2">
-                分類名稱 *
+                分類名稱 <span className="text-[oklch(0.70_0.15_25)]">*</span>
               </label>
               <input
                 type="text"
@@ -395,13 +470,15 @@ export default function CategoriesPage() {
                           <button
                             onClick={() => startEdit(category)}
                             className="p-2 rounded-lg hover:bg-[oklch(0.24_0.01_240)] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.90_0.01_90)] transition-colors"
+                            title="編輯分類"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(category.id, category.products_count)}
+                            onClick={() => handleDeleteClick(category)}
                             disabled={deleting === category.id}
                             className="p-2 rounded-lg hover:bg-[oklch(0.40_0.15_25)/0.15] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.70_0.15_25)] transition-colors disabled:opacity-50"
+                            title="刪除分類"
                           >
                             {deleting === category.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -419,6 +496,18 @@ export default function CategoriesPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ open, category: open ? deleteDialog.category : null })}
+        title="確定要刪除此分類？"
+        description="刪除後將無法恢復，請確認是否要繼續。"
+        itemName={deleteDialog.category?.title}
+        confirmText="確認刪除"
+        variant="danger"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   )
 }

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Save, Loader2 } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { SettingsSkeleton } from '@/components/admin/loading-skeleton'
 
 interface Setting {
   id: number
@@ -27,6 +29,7 @@ const SETTING_LABELS: Record<string, { label: string; description: string; type:
 }
 
 export default function SettingsPage() {
+  const { toast } = useToast()
   const [settings, setSettings] = useState<Setting[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
@@ -84,12 +87,24 @@ export default function SettingsPage() {
         setSettings(settings.map(s =>
           s.key === key ? { ...s, value: editedValues[key] } : s
         ))
+        toast({
+          title: '儲存成功',
+          description: `${SETTING_LABELS[key]?.label || key} 已更新`,
+        })
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(null)
     }
@@ -113,7 +128,10 @@ export default function SettingsPage() {
         )
 
       if (promises.length === 0) {
-        alert('沒有變更需要儲存')
+        toast({
+          title: '沒有變更',
+          description: '所有設定值皆無變更',
+        })
         setSaving(null)
         return
       }
@@ -122,10 +140,17 @@ export default function SettingsPage() {
 
       // Update local state
       setSettings(settings.map(s => ({ ...s, value: editedValues[s.key] })))
-      alert('所有設定已儲存')
+      toast({
+        title: '儲存成功',
+        description: `已更新 ${promises.length} 項設定`,
+      })
     } catch (error) {
       console.error('Save error:', error)
-      alert('部分設定儲存失敗')
+      toast({
+        title: '部分儲存失敗',
+        description: '部分設定可能未正確儲存',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(null)
     }
@@ -135,8 +160,14 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.70_0.08_160)]" />
+      <div className="p-8 max-w-3xl">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">網站設定</h1>
+            <p className="text-[oklch(0.60_0.01_240)] mt-1">載入中...</p>
+          </div>
+        </div>
+        <SettingsSkeleton />
       </div>
     )
   }
@@ -182,6 +213,7 @@ export default function SettingsPage() {
             onClick={() => handleSave(setting.key)}
             disabled={saving === setting.key}
             className="mt-7 p-2 rounded-lg bg-[oklch(0.70_0.08_160)/0.15] hover:bg-[oklch(0.70_0.08_160)/0.25] text-[oklch(0.70_0.08_160)] transition-colors disabled:opacity-50"
+            title="儲存此設定"
           >
             {saving === setting.key ? (
               <Loader2 className="w-4 h-4 animate-spin" />

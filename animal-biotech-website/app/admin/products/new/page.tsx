@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2, Upload, X, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Upload, X, Plus, Trash2, AlertCircle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface Category {
   id: number
@@ -13,6 +15,7 @@ interface Category {
 
 export default function NewProductPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -31,6 +34,26 @@ export default function NewProductPage() {
     features: [''],
     specs: [{ key: '', value: '' }],
   })
+
+  // Track form changes for unsaved changes detection
+  const initialFormRef = useRef({
+    name: '',
+    slug: '',
+    model: '',
+    description: '',
+    image: '',
+    category_id: '',
+    is_active: true,
+    is_highlighted: false,
+    sort_order: 0,
+    features: [''],
+    specs: [{ key: '', value: '' }],
+  })
+
+  const hasUnsavedChanges = JSON.stringify(form) !== JSON.stringify(initialFormRef.current)
+
+  // Warn before leaving if has unsaved changes
+  useUnsavedChanges(hasUnsavedChanges)
 
   useEffect(() => {
     fetchCategories()
@@ -71,6 +94,30 @@ export default function NewProductPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast({
+        title: '檔案過大',
+        description: '圖片檔案大小不能超過 5MB',
+        variant: 'destructive',
+      })
+      e.target.value = ''
+      return
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: '不支援的格式',
+        description: '僅支援 JPG、PNG、WebP 格式的圖片',
+        variant: 'destructive',
+      })
+      e.target.value = ''
+      return
+    }
+
     setUploading(true)
     try {
       const formData = new FormData()
@@ -85,12 +132,24 @@ export default function NewProductPage() {
 
       if (data.success) {
         setForm(prev => ({ ...prev, image: data.url }))
+        toast({
+          title: '上傳成功',
+          description: '圖片已上傳',
+        })
       } else {
-        alert(data.message || '上傳失敗')
+        toast({
+          title: '上傳失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('上傳失敗')
+      toast({
+        title: '上傳失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setUploading(false)
     }
@@ -134,7 +193,11 @@ export default function NewProductPage() {
     e.preventDefault()
 
     if (!form.name || !form.category_id) {
-      alert('請填寫產品名稱並選擇分類')
+      toast({
+        title: '必填欄位未填寫',
+        description: '請填寫產品名稱並選擇分類',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -164,13 +227,25 @@ export default function NewProductPage() {
       const data = await res.json()
 
       if (data.success) {
+        toast({
+          title: '新增成功',
+          description: `產品「${form.name}」已建立`,
+        })
         router.push('/admin/products')
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -193,10 +268,16 @@ export default function NewProductPage() {
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">新增產品</h1>
           <p className="text-[oklch(0.60_0.01_240)] mt-1">建立新的產品資料</p>
         </div>
+        {hasUnsavedChanges && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[oklch(0.50_0.15_50)/0.15] text-[oklch(0.80_0.15_50)]">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-sm font-medium">有未儲存的變更</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

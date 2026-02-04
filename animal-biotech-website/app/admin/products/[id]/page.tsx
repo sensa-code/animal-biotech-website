@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Save, Loader2, Upload, X, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, Upload, X, Plus, Trash2, AlertCircle } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
 
 interface Category {
   id: number
@@ -29,11 +31,14 @@ interface Product {
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const { toast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
+  const originalFormRef = useRef<string>('')
 
   const [form, setForm] = useState({
     name: '',
@@ -48,6 +53,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     features: [''],
     specs: [{ key: '', value: '' }],
   })
+
+  // Track unsaved changes
+  useUnsavedChanges(hasChanges)
+
+  // Check for changes whenever form updates
+  useEffect(() => {
+    if (originalFormRef.current) {
+      setHasChanges(JSON.stringify(form) !== originalFormRef.current)
+    }
+  }, [form])
 
   useEffect(() => {
     fetchData()
@@ -82,7 +97,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         // Ensure features array has at least one empty item
         const featuresArray = product.features?.length ? product.features : ['']
 
-        setForm({
+        const formData = {
           name: product.name || '',
           slug: product.slug || '',
           model: product.model || '',
@@ -94,13 +109,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           sort_order: product.sort_order || 0,
           features: featuresArray,
           specs: specsArray,
-        })
+        }
+
+        setForm(formData)
+        originalFormRef.current = JSON.stringify(formData)
       } else {
         setNotFound(true)
       }
     } catch (error) {
       console.error('Error fetching data:', error)
       setNotFound(true)
+      toast({
+        title: '載入失敗',
+        description: '無法載入產品資料',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -127,6 +150,26 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: '檔案太大',
+        description: '圖片檔案大小不能超過 5MB',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: '格式不支援',
+        description: '只支援 JPG, PNG, WebP 格式的圖片',
+        variant: 'destructive',
+      })
+      return
+    }
+
     setUploading(true)
     try {
       const formData = new FormData()
@@ -141,12 +184,24 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
       if (data.success) {
         setForm(prev => ({ ...prev, image: data.url }))
+        toast({
+          title: '上傳成功',
+          description: '圖片已成功上傳',
+        })
       } else {
-        alert(data.message || '上傳失敗')
+        toast({
+          title: '上傳失敗',
+          description: data.message || '無法上傳圖片，請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Upload error:', error)
-      alert('上傳失敗')
+      toast({
+        title: '上傳失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setUploading(false)
     }
@@ -190,7 +245,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     e.preventDefault()
 
     if (!form.name || !form.category_id) {
-      alert('請填寫產品名稱並選擇分類')
+      toast({
+        title: '請填寫必要欄位',
+        description: '產品名稱和分類為必填項目',
+        variant: 'destructive',
+      })
       return
     }
 
@@ -220,13 +279,29 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       const data = await res.json()
 
       if (data.success) {
+        // Reset hasChanges before navigation to prevent warning
+        setHasChanges(false)
+        originalFormRef.current = JSON.stringify(form)
+
+        toast({
+          title: '儲存成功',
+          description: '產品資料已更新',
+        })
         router.push('/admin/products')
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '無法儲存產品資料',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -265,10 +340,16 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">編輯產品</h1>
           <p className="text-[oklch(0.60_0.01_240)] mt-1">修改產品資料</p>
         </div>
+        {hasChanges && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[oklch(0.30_0.10_85)/0.2] text-[oklch(0.80_0.10_85)]">
+            <AlertCircle className="w-4 h-4" />
+            <span className="text-sm">有未儲存的變更</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -279,7 +360,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-[oklch(0.70_0.01_240)] mb-2">
-                產品名稱 *
+                產品名稱 <span className="text-[oklch(0.70_0.15_25)]">*</span>
               </label>
               <input
                 type="text"
@@ -318,7 +399,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
             <div>
               <label className="block text-sm font-medium text-[oklch(0.70_0.01_240)] mb-2">
-                產品分類 *
+                產品分類 <span className="text-[oklch(0.70_0.15_25)]">*</span>
               </label>
               <select
                 value={form.category_id}
@@ -414,7 +495,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={handleImageUpload}
                   className="hidden"
                   disabled={uploading}

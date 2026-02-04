@@ -3,6 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, Pencil, Trash2, Search, Loader2, Eye, EyeOff } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useDebounce } from '@/hooks/use-debounce'
+import { ConfirmDialog } from '@/components/admin/confirm-dialog'
+import { NewsListSkeleton } from '@/components/admin/loading-skeleton'
 
 interface NewsItem {
   id: number
@@ -17,11 +21,16 @@ interface NewsItem {
 }
 
 export default function NewsPage() {
+  const { toast } = useToast()
   const [news, setNews] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [deleting, setDeleting] = useState<number | null>(null)
   const [toggling, setToggling] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<NewsItem | null>(null)
+
+  // Debounce search for performance
+  const debouncedSearch = useDebounce(search, 300)
 
   useEffect(() => {
     fetchNews()
@@ -42,24 +51,37 @@ export default function NewsPage() {
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('確定要刪除此消息嗎？')) return
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
 
-    setDeleting(id)
+    setDeleting(deleteTarget.id)
     try {
-      const res = await fetch(`/api/admin/news/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/news/${deleteTarget.id}`, { method: 'DELETE' })
       const data = await res.json()
 
       if (data.success) {
-        setNews(news.filter((n) => n.id !== id))
+        setNews(news.filter((n) => n.id !== deleteTarget.id))
+        toast({
+          title: '刪除成功',
+          description: `「${deleteTarget.title}」已被刪除`,
+        })
       } else {
-        alert(data.message || '刪除失敗')
+        toast({
+          title: '刪除失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Error deleting news:', error)
-      alert('刪除失敗')
+      toast({
+        title: '刪除失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setDeleting(null)
+      setDeleteTarget(null)
     }
   }
 
@@ -83,21 +105,33 @@ export default function NewsPage() {
             ? { ...n, is_published: !n.is_published }
             : n
         ))
+        toast({
+          title: item.is_published ? '已取消發布' : '已發布',
+          description: `「${item.title}」${item.is_published ? '已設為草稿' : '已發布'}`,
+        })
       } else {
-        alert(data.message || '更新失敗')
+        toast({
+          title: '更新失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Error toggling publish:', error)
-      alert('更新失敗')
+      toast({
+        title: '更新失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setToggling(null)
     }
   }
 
   const filteredNews = news.filter((item) =>
-    !search ||
-    item.title.toLowerCase().includes(search.toLowerCase()) ||
-    item.excerpt?.toLowerCase().includes(search.toLowerCase())
+    !debouncedSearch ||
+    item.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    item.excerpt?.toLowerCase().includes(debouncedSearch.toLowerCase())
   )
 
   const formatDate = (dateString: string | null) => {
@@ -111,8 +145,14 @@ export default function NewsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.70_0.08_160)]" />
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">最新消息</h1>
+            <p className="text-[oklch(0.60_0.01_240)] mt-1">載入中...</p>
+          </div>
+        </div>
+        <NewsListSkeleton />
       </div>
     )
   }
@@ -241,13 +281,15 @@ export default function NewsPage() {
                       <Link
                         href={`/admin/news/${item.id}`}
                         className="p-2 rounded-lg hover:bg-[oklch(0.24_0.01_240)] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.90_0.01_90)] transition-colors"
+                        title="編輯"
                       >
                         <Pencil className="w-4 h-4" />
                       </Link>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => setDeleteTarget(item)}
                         disabled={deleting === item.id}
                         className="p-2 rounded-lg hover:bg-[oklch(0.40_0.15_25)/0.15] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.70_0.15_25)] transition-colors disabled:opacity-50"
+                        title="刪除"
                       >
                         {deleting === item.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -263,6 +305,18 @@ export default function NewsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        title="確定要刪除此消息嗎？"
+        description="此操作無法復原，消息將永久刪除。"
+        itemName={deleteTarget?.title}
+        confirmText="確定刪除"
+        isLoading={!!deleting}
+      />
     </div>
   )
 }

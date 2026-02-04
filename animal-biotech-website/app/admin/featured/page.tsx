@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, GripVertical, Save, Star, ArrowUp, ArrowDown } from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
+import { useUnsavedChanges } from '@/hooks/use-unsaved-changes'
+import { FeaturedListSkeleton } from '@/components/admin/loading-skeleton'
 
 interface FeaturedProduct {
   id: number
@@ -19,10 +22,14 @@ interface FeaturedProduct {
 }
 
 export default function FeaturedPage() {
+  const { toast } = useToast()
   const [featured, setFeatured] = useState<FeaturedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Warn before leaving if has unsaved changes
+  useUnsavedChanges(hasChanges)
 
   useEffect(() => {
     fetchFeatured()
@@ -76,13 +83,24 @@ export default function FeaturedPage() {
 
       if (data.success) {
         setHasChanges(false)
-        alert('排序已儲存')
+        toast({
+          title: '儲存成功',
+          description: '主打產品排序已更新',
+        })
       } else {
-        alert(data.message || '儲存失敗')
+        toast({
+          title: '儲存失敗',
+          description: data.message || '請稍後再試',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Save error:', error)
-      alert('儲存失敗')
+      toast({
+        title: '儲存失敗',
+        description: '發生錯誤，請稍後再試',
+        variant: 'destructive',
+      })
     } finally {
       setSaving(false)
     }
@@ -90,8 +108,14 @@ export default function FeaturedPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-[oklch(0.70_0.08_160)]" />
+      <div className="p-8 max-w-3xl">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-[oklch(0.95_0.01_90)]">主打產品排序</h1>
+            <p className="text-[oklch(0.60_0.01_240)] mt-1">載入中...</p>
+          </div>
+        </div>
+        <FeaturedListSkeleton />
       </div>
     )
   }
@@ -175,6 +199,7 @@ export default function FeaturedPage() {
                   onClick={() => moveItem(index, 'up')}
                   disabled={index === 0}
                   className="p-2 rounded-lg hover:bg-[oklch(0.24_0.01_240)] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.90_0.01_90)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="上移"
                 >
                   <ArrowUp className="w-4 h-4" />
                 </button>
@@ -182,6 +207,7 @@ export default function FeaturedPage() {
                   onClick={() => moveItem(index, 'down')}
                   disabled={index === featured.length - 1}
                   className="p-2 rounded-lg hover:bg-[oklch(0.24_0.01_240)] text-[oklch(0.70_0.01_240)] hover:text-[oklch(0.90_0.01_90)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  title="下移"
                 >
                   <ArrowDown className="w-4 h-4" />
                 </button>
