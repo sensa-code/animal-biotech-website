@@ -5,12 +5,16 @@ import { supabaseAdmin } from './supabase'
 export async function getProducts(categoryId?: number) {
   if (!supabaseAdmin) return []
 
+  // First get all categories for mapping
+  const { data: categories } = await supabaseAdmin
+    .from('product_categories')
+    .select('id, slug, title')
+
+  const categoryMap = new Map(categories?.map(c => [c.id, c]) || [])
+
   let query = supabaseAdmin
     .from('products')
-    .select(`
-      *,
-      product_categories!inner(id, slug, title)
-    `)
+    .select('*')
     .order('sort_order')
 
   if (categoryId) {
@@ -24,7 +28,11 @@ export async function getProducts(categoryId?: number) {
     return []
   }
 
-  return data || []
+  // Manually join category data
+  return (data || []).map(product => ({
+    ...product,
+    product_categories: categoryMap.get(product.category_id) || null
+  }))
 }
 
 export async function getProductById(id: number) {
@@ -32,10 +40,7 @@ export async function getProductById(id: number) {
 
   const { data, error } = await supabaseAdmin
     .from('products')
-    .select(`
-      *,
-      product_categories!inner(id, slug, title)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
 
@@ -44,7 +49,19 @@ export async function getProductById(id: number) {
     return null
   }
 
-  return data
+  if (!data) return null
+
+  // Get category data separately
+  const { data: category } = await supabaseAdmin
+    .from('product_categories')
+    .select('id, slug, title')
+    .eq('id', data.category_id)
+    .single()
+
+  return {
+    ...data,
+    product_categories: category || null
+  }
 }
 
 export async function createProduct(product: {
@@ -221,12 +238,16 @@ export async function deleteCategory(id: number) {
 export async function getFeaturedProducts() {
   if (!supabaseAdmin) return []
 
+  // Get all products for mapping
+  const { data: products } = await supabaseAdmin
+    .from('products')
+    .select('id, slug, name, description, image')
+
+  const productMap = new Map(products?.map(p => [p.id, p]) || [])
+
   const { data, error } = await supabaseAdmin
     .from('featured_products')
-    .select(`
-      *,
-      products!inner(id, slug, name, description, image)
-    `)
+    .select('*')
     .order('sort_order')
 
   if (error) {
@@ -234,7 +255,11 @@ export async function getFeaturedProducts() {
     return []
   }
 
-  return data || []
+  // Manually join product data
+  return (data || []).map(fp => ({
+    ...fp,
+    products: productMap.get(fp.product_id) || null
+  }))
 }
 
 export async function updateFeaturedProducts(items: Array<{
