@@ -6,6 +6,7 @@ import { ProductsSection } from "@/components/discoveries-section"
 import { NewsSection } from "@/components/team-section"
 import { CTASection } from "@/components/cta-section"
 import { Footer } from "@/components/footer"
+import { AuthCallbackHandler } from "@/components/auth-callback-handler"
 import {
   getSiteSettings,
   getHeroContent,
@@ -25,6 +26,7 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-screen bg-background">
+      <AuthCallbackHandler />
       <Header />
       <HeroSection hero={hero} />
       <AboutSection stats={stats} />
