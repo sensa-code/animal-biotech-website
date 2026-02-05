@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { label: "關於上弦", href: "/about" },
   { label: "產品服務", href: "/products" },
+  { label: "產品驗證", href: "/trace" },
   { label: "聯絡我們", href: "/contact" },
 ]
 

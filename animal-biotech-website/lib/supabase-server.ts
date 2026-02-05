@@ -28,7 +28,7 @@ export async function createClient() {
   )
 }
 
-// Admin client with service role key for backend operations
+// Admin client with service role key for backend operations (website schema)
 export async function createAdminClient() {
   const cookieStore = await cookies()
 
@@ -52,6 +52,35 @@ export async function createAdminClient() {
       },
       db: {
         schema: 'website',
+      },
+    }
+  )
+}
+
+// Traceability client with service role key for product tracing operations
+export async function createTraceabilityClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Ignore
+          }
+        },
+      },
+      db: {
+        schema: 'traceability',
       },
     }
   )

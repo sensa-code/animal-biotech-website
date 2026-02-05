@@ -13,6 +13,7 @@ import {
   Newspaper,
   LogOut,
   ChevronDown,
+  QrCode,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -29,6 +30,14 @@ const menuItems = [
       { label: '產品列表', href: '/admin/products' },
       { label: '分類管理', href: '/admin/categories' },
       { label: '主打產品', href: '/admin/featured' },
+    ],
+  },
+  {
+    label: '溯源管理',
+    icon: QrCode,
+    children: [
+      { label: '溯源記錄', href: '/admin/traceability' },
+      { label: '批次匯入', href: '/admin/traceability/batch' },
     ],
   },
   {
