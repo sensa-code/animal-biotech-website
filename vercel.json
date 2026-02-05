@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd animal-biotech-website && npm run build",
+  "outputDirectory": "animal-biotech-website/.next",
+  "installCommand": "cd animal-biotech-website && npm install",
+  "framework": "nextjs"
+}
