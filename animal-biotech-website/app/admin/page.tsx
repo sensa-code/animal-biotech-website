@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase-server'
+import Link from 'next/link'
 import { Package, FolderTree, Newspaper, MessageSquare } from 'lucide-react'
 
 async function getStats() {
@@ -80,7 +81,7 @@ export default async function AdminDashboard() {
         {cards.map((card) => {
           const Icon = card.icon
           return (
-            <a
+            <Link
               key={card.title}
               href={card.href}
               className="block p-6 rounded-xl bg-[oklch(0.16_0.01_240)] border border-[oklch(0.22_0.02_240)] hover:border-[oklch(0.30_0.02_240)] transition-colors"
@@ -99,7 +100,7 @@ export default async function AdminDashboard() {
               <p className="text-sm text-[oklch(0.60_0.01_240)] mt-1">
                 {card.title}
               </p>
-            </a>
+            </Link>
           )
         })}
       </div>
@@ -110,34 +111,34 @@ export default async function AdminDashboard() {
           快速操作
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <a
+          <Link
             href="/admin/products/new"
             className="flex items-center gap-3 p-4 rounded-lg bg-[oklch(0.20_0.01_240)] hover:bg-[oklch(0.24_0.01_240)] transition-colors"
           >
             <Package className="w-5 h-5 text-[oklch(0.70_0.08_160)]" />
             <span className="text-sm text-[oklch(0.85_0.01_90)]">新增產品</span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/news/new"
             className="flex items-center gap-3 p-4 rounded-lg bg-[oklch(0.20_0.01_240)] hover:bg-[oklch(0.24_0.01_240)] transition-colors"
           >
             <Newspaper className="w-5 h-5 text-[oklch(0.70_0.10_50)]" />
             <span className="text-sm text-[oklch(0.85_0.01_90)]">發布消息</span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/homepage"
             className="flex items-center gap-3 p-4 rounded-lg bg-[oklch(0.20_0.01_240)] hover:bg-[oklch(0.24_0.01_240)] transition-colors"
           >
             <FolderTree className="w-5 h-5 text-[oklch(0.70_0.10_250)]" />
             <span className="text-sm text-[oklch(0.85_0.01_90)]">編輯首頁</span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/settings"
             className="flex items-center gap-3 p-4 rounded-lg bg-[oklch(0.20_0.01_240)] hover:bg-[oklch(0.24_0.01_240)] transition-colors"
           >
             <MessageSquare className="w-5 h-5 text-[oklch(0.70_0.12_25)]" />
             <span className="text-sm text-[oklch(0.85_0.01_90)]">網站設定</span>
-          </a>
+          </Link>
         </div>
       </div>
     </div>

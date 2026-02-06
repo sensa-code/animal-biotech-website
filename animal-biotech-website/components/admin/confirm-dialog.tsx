@@ -21,6 +21,8 @@ interface ConfirmDialogProps {
   confirmText?: string
   cancelText?: string
   variant?: 'danger' | 'warning'
+  /** 外部傳入的 loading 狀態，優先於內部 loading */
+  isLoading?: boolean
   onConfirm: () => Promise<void> | void
 }
 
@@ -33,19 +35,22 @@ export function ConfirmDialog({
   confirmText = '確認刪除',
   cancelText = '取消',
   variant = 'danger',
+  isLoading: externalLoading,
   onConfirm,
 }: ConfirmDialogProps) {
-  const [loading, setLoading] = useState(false)
+  const [internalLoading, setInternalLoading] = useState(false)
+  // 外部 isLoading 優先於內部狀態
+  const loading = externalLoading ?? internalLoading
 
   const handleConfirm = async () => {
-    setLoading(true)
+    setInternalLoading(true)
     try {
       await onConfirm()
       onOpenChange(false)
     } catch (error) {
       console.error('Confirm action failed:', error)
     } finally {
-      setLoading(false)
+      setInternalLoading(false)
     }
   }
 

@@ -1,7 +1,26 @@
 // Fallback data used when database is unavailable
 // Extracted from the original V0 template static content
 
-export const defaultProductCategories = [
+interface DefaultProduct {
+  id: string
+  name: string
+  model: string
+  description: string
+  features: string[]
+  specs: Record<string, string>
+  highlight?: boolean
+}
+
+interface DefaultCategory {
+  id: string
+  icon_name: string
+  title: string
+  subtitle: string
+  description: string
+  products: DefaultProduct[]
+}
+
+export const defaultProductCategories: DefaultCategory[] = [
   {
     id: "diagnostic",
     icon_name: "Activity",

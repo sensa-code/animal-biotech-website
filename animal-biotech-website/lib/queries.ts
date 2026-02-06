@@ -93,13 +93,13 @@ export async function getFeaturedProducts() {
   if (error || !data) return []
 
   // Flatten the joined data
-  return data.map((fp: Record<string, unknown>) => {
-    const product = fp.products as Record<string, unknown>
+  return data.map((fp) => {
+    const product = fp.products as unknown as { slug: string; name: string; description: string }
     return {
-      id: fp.id,
-      category_label: fp.category_label,
-      badge_text: fp.badge_text,
-      highlight_text: fp.highlight_text,
+      id: fp.id as number,
+      category_label: fp.category_label as string,
+      badge_text: fp.badge_text as string,
+      highlight_text: fp.highlight_text as string,
       slug: product.slug,
       name: product.name,
       description: product.description,
@@ -121,14 +121,14 @@ export async function getProductBySlug(slug: string) {
     .single()
   if (error || !data) return null
 
-  const cat = data.product_categories as Record<string, unknown>
+  const cat = data.product_categories as unknown as { title: string; subtitle: string; slug: string; icon_name: string }
   return {
     ...data,
     product_categories: undefined,
-    category_title: cat.title,
-    category_subtitle: cat.subtitle,
-    category_slug: cat.slug,
-    category_icon: cat.icon_name,
+    category_title: cat.title as string | undefined,
+    category_subtitle: cat.subtitle as string | undefined,
+    category_slug: cat.slug as string | undefined,
+    category_icon: cat.icon_name as string | undefined,
   }
 }
 

@@ -74,15 +74,21 @@ export function Footer({
               {s.company_description}
             </p>
             <div className="flex items-center gap-4">
+              {/* TODO: Replace href="#" with real LinkedIn URL */}
               <a
                 href="#"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-accent transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />
               </a>
+              {/* TODO: Replace href="#" with real Twitter URL */}
               <a
                 href="#"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-accent transition-colors"
                 aria-label="Twitter"
               >
@@ -128,12 +134,13 @@ export function Footer({
             <ul className="space-y-3">
               {contactLinks.map((link) => (
                 <li key={link.label}>
-                  <Link
+                  <a
                     href={link.href}
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    {...(link.href.startsWith('https://') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -145,15 +152,15 @@ export function Footer({
             &copy; {new Date().getFullYear()} 上弦動物生技有限公司. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <span className="text-xs text-muted-foreground">
               隱私政策
-            </Link>
-            <Link href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            </span>
+            <span className="text-xs text-muted-foreground">
               使用條款
-            </Link>
-            <Link href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            </span>
+            <span className="text-xs text-muted-foreground">
               Cookie 設定
-            </Link>
+            </span>
           </div>
         </div>
       </div>

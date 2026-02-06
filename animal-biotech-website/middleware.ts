@@ -2,6 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // [CRITICAL #5] 公開頁面不需要 auth 驗證，直接放行以減少延遲
+  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin')
+  if (!isAdminRoute) {
+    return NextResponse.next()
+  }
+
+  // 以下僅對 /admin 和 /api/admin 路由執行 auth 邏輯
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -32,21 +41,31 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Protect /admin routes (except /admin/login)
+  // [CRITICAL #3] Protect /admin routes (except /admin/login AND /admin/reset-password)
   if (
-    request.nextUrl.pathname.startsWith('/admin') &&
-    !request.nextUrl.pathname.startsWith('/admin/login')
+    pathname.startsWith('/admin') &&
+    !pathname.startsWith('/admin/login') &&
+    !pathname.startsWith('/admin/reset-password')
   ) {
     if (!user) {
-      // Redirect to login if not authenticated
       const url = request.nextUrl.clone()
       url.pathname = '/admin/login'
       return NextResponse.redirect(url)
     }
   }
 
+  // [CRITICAL #2] Protect /api/admin routes at middleware level
+  if (pathname.startsWith('/api/admin')) {
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: '未授權存取' },
+        { status: 401 }
+      )
+    }
+  }
+
   // Redirect authenticated users away from login page
-  if (request.nextUrl.pathname === '/admin/login' && user) {
+  if (pathname === '/admin/login' && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/admin'
     return NextResponse.redirect(url)

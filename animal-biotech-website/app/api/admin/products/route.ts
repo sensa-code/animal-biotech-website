@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getProducts, createProduct } from '@/lib/admin-queries'
+import { requireAdmin } from '@/lib/admin-auth'
 
 export async function GET(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
+
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('category_id')
 
@@ -19,6 +23,9 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
+
     const body = await request.json()
 
     const { category_id, slug, name, model, description, features, specs, image, is_highlighted, sort_order, is_active } = body

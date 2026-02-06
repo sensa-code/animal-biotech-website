@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getCategories, createCategory } from '@/lib/admin-queries'
 
 export async function GET() {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const categories = await getCategories()
     return NextResponse.json({ success: true, data: categories })
   } catch (error) {
@@ -16,6 +19,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const body = await request.json()
     const { slug, icon_name, title, subtitle, description, hero_image, sort_order, is_active } = body
 

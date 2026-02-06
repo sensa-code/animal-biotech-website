@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { batchCreateProductRecords } from '@/lib/traceability-queries'
 
 // POST: 批次新增溯源記錄
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const body = await request.json()
     const { records } = body
 

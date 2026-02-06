@@ -39,6 +39,9 @@ export default function NewsPage() {
   const fetchNews = async () => {
     try {
       const res = await fetch('/api/admin/news')
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
 
       if (data.success) {
@@ -46,6 +49,11 @@ export default function NewsPage() {
       }
     } catch (error) {
       console.error('Error fetching news:', error)
+      toast({
+        title: '載入失敗',
+        description: '無法載入最新消息資料，請重新整理頁面',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -92,7 +100,6 @@ export default function NewsPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...item,
           is_published: !item.is_published,
           published_at: !item.is_published ? new Date().toISOString() : item.published_at,
         }),

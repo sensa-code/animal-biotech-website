@@ -42,6 +42,9 @@ export default function SettingsPage() {
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/admin/settings')
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
 
       if (data.success) {

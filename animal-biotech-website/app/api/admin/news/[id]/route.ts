@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getNewsById, updateNews, deleteNews } from '@/lib/admin-queries'
 
 export async function GET(
@@ -6,6 +7,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const news = await getNewsById(parseInt(id))
 
@@ -31,6 +34,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const body = await request.json()
 
@@ -50,6 +55,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     await deleteNews(parseInt(id))
     return NextResponse.json({ success: true, message: '消息已刪除' })

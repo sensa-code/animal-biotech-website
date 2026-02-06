@@ -55,6 +55,9 @@ export default function CategoriesPage() {
   const fetchCategories = async () => {
     try {
       const res = await fetch('/api/admin/categories')
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       if (data.success) {
         setCategories(data.data)
@@ -72,12 +75,19 @@ export default function CategoriesPage() {
   }
 
   const generateSlug = (title: string) => {
-    return title
+    // 先處理 ASCII 部分
+    const asciiSlug = title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
+      .replace(/[^\w\s\u4e00-\u9fff-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim()
+    // 若結果為空或僅含中文字元，加入時間戳確保唯一性
+    const stripped = asciiSlug.replace(/[\u4e00-\u9fff]/g, '').replace(/-+/g, '').trim()
+    if (!stripped) {
+      return `item-${Date.now().toString(36)}`
+    }
+    return asciiSlug.replace(/[\u4e00-\u9fff]+/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')  || `item-${Date.now().toString(36)}`
   }
 
   const startEdit = (category: Category) => {

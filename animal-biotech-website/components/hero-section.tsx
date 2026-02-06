@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 
 interface HeroData {
@@ -133,18 +134,18 @@ export function HeroSection({ hero }: { hero?: HeroData | null }) {
           {data.description}
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000 delay-700">
-          <a
+          <Link
             href={data.cta_primary_link}
             className="inline-flex items-center justify-center px-8 py-4 bg-foreground text-background text-sm tracking-widest uppercase hover:bg-accent hover:text-background transition-all duration-300"
           >
             {data.cta_primary_text}
-          </a>
-          <a
+          </Link>
+          <Link
             href={data.cta_secondary_link}
             className="inline-flex items-center justify-center px-8 py-4 border border-foreground/30 text-foreground text-sm tracking-widest uppercase hover:border-foreground hover:bg-foreground/5 transition-all duration-300"
           >
             {data.cta_secondary_text}
-          </a>
+          </Link>
         </div>
       </div>
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">

@@ -45,6 +45,9 @@ export default function HomepagePage() {
   const fetchData = async () => {
     try {
       const res = await fetch('/api/admin/homepage')
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
 
       if (data.success) {
@@ -65,6 +68,11 @@ export default function HomepagePage() {
       }
     } catch (error) {
       console.error('Error fetching homepage data:', error)
+      toast({
+        title: '載入失敗',
+        description: '無法載入首頁內容資料，請重新整理頁面',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }
@@ -73,6 +81,30 @@ export default function HomepagePage() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast({
+        title: '檔案過大',
+        description: '圖片檔案大小不能超過 5MB',
+        variant: 'destructive',
+      })
+      e.target.value = ''
+      return
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: '不支援的格式',
+        description: '僅支援 JPG、PNG、GIF、WebP 格式的圖片',
+        variant: 'destructive',
+      })
+      e.target.value = ''
+      return
+    }
 
     setUploading(true)
     try {
@@ -149,10 +181,9 @@ export default function HomepagePage() {
   }
 
   const handleStatChange = (index: number, field: keyof Stat, value: string | number) => {
-    const newStats = [...stats]
-    // @ts-ignore
-    newStats[index][field] = value
-    setStats(newStats)
+    setStats(prev => prev.map((stat, i) =>
+      i === index ? { ...stat, [field]: value } : stat
+    ))
   }
 
   const handleSaveStats = async () => {

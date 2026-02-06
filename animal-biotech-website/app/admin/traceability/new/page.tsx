@@ -12,7 +12,7 @@ export default function NewTraceabilityPage() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     product_code: '',
-    product_name: '動物專用顯影安全氣管插管',
+    product_name: '',
     hospital_name: '',
     purchase_date: '',
   })

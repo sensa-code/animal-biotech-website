@@ -8,9 +8,21 @@ const _inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const _playfair = Playfair_Display({ subsets: ["latin"], variable: '--font-playfair' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://animal-biotech-website.vercel.app'),
   title: '上弦動物生技 | 專業動物醫療設備與耗材',
   description: '上弦動物生技以獸醫師角度出發，提供動物醫院完善的檢測設備、滅菌服務及醫療耗材，致力打造更優質的動物醫療環境。',
-  generator: 'v0.app',
+  openGraph: {
+    title: '上弦動物生技 | 專業動物醫療設備與耗材',
+    description: '上弦動物生技以獸醫師的角度為出發點，提供動物醫院完善的檢測設備、滅菌服務及醫療耗材。',
+    type: 'website',
+    locale: 'zh_TW',
+    siteName: '上弦動物生技',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '上弦動物生技 | 專業動物醫療設備與耗材',
+    description: '上弦動物生技以獸醫師的角度為出發點，提供動物醫院完善的檢測設備、滅菌服務及醫療耗材。',
+  },
   icons: {
     icon: [
       {

@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getTraceabilityStats } from '@/lib/traceability-queries'
 
 // GET: 取得溯源統計資料
 export async function GET() {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const stats = await getTraceabilityStats()
 
     return NextResponse.json({

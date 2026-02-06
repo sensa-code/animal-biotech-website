@@ -130,19 +130,25 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }
 
   const generateSlug = (name: string) => {
-    return name
+    // 先處理 ASCII 部分
+    const asciiSlug = name
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
+      .replace(/[^\w\s\u4e00-\u9fff-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .trim()
+    // 若結果為空或僅含中文字元，加入時間戳確保唯一性
+    const stripped = asciiSlug.replace(/[\u4e00-\u9fff]/g, '').replace(/-+/g, '').trim()
+    if (!stripped) {
+      return `item-${Date.now().toString(36)}`
+    }
+    return asciiSlug.replace(/[\u4e00-\u9fff]+/g, '').replace(/-+/g, '-').replace(/^-|-$/g, '')  || `item-${Date.now().toString(36)}`
   }
 
   const handleNameChange = (name: string) => {
     setForm(prev => ({
       ...prev,
       name,
-      slug: generateSlug(name),
     }))
   }
 
@@ -225,8 +231,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleSpecChange = (index: number, field: 'key' | 'value', value: string) => {
-    const newSpecs = [...form.specs]
-    newSpecs[index][field] = value
+    const newSpecs = form.specs.map((spec, i) =>
+      i === index ? { ...spec, [field]: value } : spec
+    )
     setForm(prev => ({ ...prev, specs: newSpecs }))
   }
 

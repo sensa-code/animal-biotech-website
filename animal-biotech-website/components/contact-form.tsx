@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Send, Loader2, CheckCircle2 } from "lucide-react"
 
-interface FormData {
+interface ContactFormData {
   name: string
   email: string
   phone: string
@@ -11,7 +11,7 @@ interface FormData {
   message: string
 }
 
-const initialForm: FormData = {
+const initialForm: ContactFormData = {
   name: "",
   email: "",
   phone: "",
@@ -20,13 +20,13 @@ const initialForm: FormData = {
 }
 
 export function ContactForm() {
-  const [form, setForm] = useState<FormData>(initialForm)
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
+  const [form, setForm] = useState<ContactFormData>(initialForm)
+  const [errors, setErrors] = useState<Partial<Record<keyof ContactFormData, string>>>({})
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle")
   const [serverMessage, setServerMessage] = useState("")
 
   function validate(): boolean {
-    const newErrors: Partial<Record<keyof FormData, string>> = {}
+    const newErrors: Partial<Record<keyof ContactFormData, string>> = {}
 
     if (!form.name.trim()) newErrors.name = "請輸入姓名"
     if (!form.email.trim()) {
@@ -67,7 +67,7 @@ export function ContactForm() {
     }
   }
 
-  function handleChange(field: keyof FormData, value: string) {
+  function handleChange(field: keyof ContactFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getProductById, updateProduct, deleteProduct } from '@/lib/admin-queries'
 
 export async function GET(
@@ -6,6 +7,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const product = await getProductById(parseInt(id))
 
@@ -31,6 +34,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const body = await request.json()
 
@@ -50,6 +55,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     await deleteProduct(parseInt(id))
     return NextResponse.json({ success: true, message: '產品已刪除' })

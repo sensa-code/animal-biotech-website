@@ -65,13 +65,13 @@ export function ProductsSection({ featured }: { featured?: FeaturedProduct[] }) 
               專業檢測與診斷方案
             </h2>
           </div>
-          <a
+          <Link
             href="/products"
             className="inline-flex items-center gap-2 text-sm tracking-widest uppercase text-foreground hover:text-accent transition-colors group"
           >
             查看全部產品
             <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </a>
+          </Link>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">

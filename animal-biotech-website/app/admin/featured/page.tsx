@@ -38,12 +38,20 @@ export default function FeaturedPage() {
   const fetchFeatured = async () => {
     try {
       const res = await fetch('/api/admin/featured')
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       if (data.success) {
         setFeatured(data.data)
       }
     } catch (error) {
       console.error('Error fetching featured products:', error)
+      toast({
+        title: '載入失敗',
+        description: '無法載入主打產品資料，請重新整理頁面',
+        variant: 'destructive',
+      })
     } finally {
       setLoading(false)
     }

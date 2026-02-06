@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { createClient } from '@supabase/supabase-js'
 
 // Create a Supabase client with service role key for storage operations
@@ -9,6 +10,8 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const formData = await request.formData()
     const file = formData.get('file') as File
     const folder = formData.get('folder') as string || 'products'

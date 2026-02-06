@@ -46,9 +46,9 @@ export default function ResetPasswordPage() {
         return
       }
 
-      // Check if there's an existing session
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
+      // [CRITICAL #4] 使用 getUser() 而非 getSession()，確保 JWT 經伺服器驗證
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
         setHasSession(true)
       } else {
         setError('請透過密碼重設信件中的連結進入此頁面')

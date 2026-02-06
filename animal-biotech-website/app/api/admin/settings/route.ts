@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getSiteSettingsAdmin, updateSiteSetting } from '@/lib/admin-queries'
 
 export async function GET() {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const settings = await getSiteSettingsAdmin()
     return NextResponse.json({ success: true, data: settings })
   } catch (error) {
@@ -16,6 +19,8 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const body = await request.json()
     const { settings } = body
 

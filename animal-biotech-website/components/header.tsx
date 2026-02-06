@@ -90,6 +90,7 @@ export function Header() {
             className="lg:hidden p-2 text-foreground"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={isMobileMenuOpen}
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -98,6 +99,8 @@ export function Header() {
 
       {/* Mobile Menu */}
       <div
+        role="navigation"
+        aria-label="主選單"
         className={cn(
           "lg:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-lg border-b border-border transition-all duration-300 overflow-hidden",
           isMobileMenuOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"

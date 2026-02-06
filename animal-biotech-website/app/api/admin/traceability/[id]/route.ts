@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import {
   getProductRecordById,
   updateProductRecord,
@@ -11,6 +12,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const recordId = parseInt(id)
 
@@ -49,6 +52,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const recordId = parseInt(id)
 
@@ -104,6 +109,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { id } = await params
     const recordId = parseInt(id)
 

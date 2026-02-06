@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getNewsAdmin, createNews } from '@/lib/admin-queries'
 
 export async function GET() {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const news = await getNewsAdmin()
     return NextResponse.json({ success: true, data: news })
   } catch (error) {
@@ -16,6 +19,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const body = await request.json()
     const { title, content, summary, is_published, published_at } = body
 

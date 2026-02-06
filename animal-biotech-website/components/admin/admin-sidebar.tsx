@@ -60,7 +60,12 @@ const menuItems = [
 export function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [expandedMenu, setExpandedMenu] = useState<string | null>('產品管理')
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(() => {
+    const parentMenu = menuItems.find(
+      (item) => item.children?.some((child) => pathname.startsWith(child.href))
+    )
+    return parentMenu?.label ?? null
+  })
 
   const handleLogout = async () => {
     const supabase = createClient()

@@ -16,13 +16,28 @@ import {
 } from "@/lib/queries"
 
 export default async function HomePage() {
-  const [settings, hero, stats, categories, featured] = await Promise.all([
-    getSiteSettings(),
-    getHeroContent(),
-    getStats(),
-    getProductCategories(),
-    getFeaturedProducts(),
-  ])
+  let settings: Record<string, string> = {}
+  let hero: Awaited<ReturnType<typeof getHeroContent>> = null
+  let stats: Awaited<ReturnType<typeof getStats>> = []
+  let categories: Awaited<ReturnType<typeof getProductCategories>> = []
+  let featured: Awaited<ReturnType<typeof getFeaturedProducts>> = []
+
+  try {
+    const results = await Promise.all([
+      getSiteSettings(),
+      getHeroContent(),
+      getStats(),
+      getProductCategories(),
+      getFeaturedProducts(),
+    ])
+    settings = results[0]
+    hero = results[1]
+    stats = results[2] ?? []
+    categories = results[3] ?? []
+    featured = results[4] ?? []
+  } catch (error) {
+    console.error('Failed to fetch homepage data:', error)
+  }
 
   return (
     <main className="min-h-screen bg-background">

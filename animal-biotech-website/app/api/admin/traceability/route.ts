@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/admin-auth'
 import { getProductRecords, createProductRecord } from '@/lib/traceability-queries'
 
 // GET: 取得溯源記錄列表
 export async function GET(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const { searchParams } = new URL(request.url)
 
     const page = parseInt(searchParams.get('page') || '1')
@@ -42,6 +45,8 @@ export async function GET(request: Request) {
 // POST: 新增單筆溯源記錄
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin()
+    if (!auth.authenticated) return auth.response
     const body = await request.json()
 
     const { product_code, product_name, hospital_name, purchase_date } = body
