@@ -119,7 +119,7 @@ export default function HomepagePage() {
       const data = await res.json()
 
       if (data.success) {
-        setHeroForm(prev => ({ ...prev, background_image: data.url }))
+        setHeroForm(prev => ({ ...prev, background_image: data.data.url }))
         toast({
           title: '上傳成功',
           description: '背景圖片已更新',

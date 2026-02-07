@@ -102,7 +102,7 @@ export default function NewNewsPage() {
       const data = await res.json()
 
       if (data.success) {
-        setForm(prev => ({ ...prev, image: data.url }))
+        setForm(prev => ({ ...prev, image: data.data.url }))
         toast({
           title: '上傳成功',
           description: '圖片已上傳',
