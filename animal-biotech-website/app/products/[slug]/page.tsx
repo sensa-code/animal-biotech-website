@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getSiteSettings, getProductCategories } from "@/lib/queries"
@@ -64,6 +65,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     features: string[]
     specs: Record<string, string>
     highlight?: boolean
+    image?: string | null
     category_title?: string
     category_subtitle?: string
     category_slug?: string
@@ -78,6 +80,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       features: Array.isArray(dbProduct.features) ? dbProduct.features : [],
       specs: (typeof dbProduct.specs === "object" && dbProduct.specs !== null ? dbProduct.specs : {}) as Record<string, string>,
       highlight: dbProduct.is_highlighted || false,
+      image: dbProduct.image || null,
       category_title: dbProduct.category_title,
       category_subtitle: dbProduct.category_subtitle,
       category_slug: dbProduct.category_slug,
@@ -157,6 +160,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-3xl">
             {product.description}
           </p>
+
+          {product.image && (
+            <div className="mt-10">
+              <div className="relative w-full max-w-lg aspect-[4/3] bg-secondary/30 overflow-hidden border border-border">
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-6"
+                  sizes="(max-width: 768px) 100vw, 512px"
+                  priority
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

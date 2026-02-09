@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import {
   Activity,
@@ -30,6 +31,7 @@ interface Product {
   features: string[]
   specs: Record<string, string>
   highlight?: boolean
+  image?: string | null
 }
 
 interface Category {
@@ -161,6 +163,22 @@ export function ProductsPageClient({ categories }: { categories: Category[] }) {
                 <div className="p-8 lg:p-12">
                   <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
                     <div className="lg:col-span-2">
+                      {product.image && (
+                        <div className="mb-8">
+                          <Link href={`/products/${product.id}`} className="block">
+                            <div className="relative w-full aspect-[16/9] max-w-md bg-secondary/30 overflow-hidden border border-border">
+                              <Image
+                                src={product.image}
+                                alt={product.name}
+                                fill
+                                className="object-contain p-4"
+                                sizes="(max-width: 768px) 100vw, 400px"
+                              />
+                            </div>
+                          </Link>
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-4 mb-4">
                         <span className="text-xs tracking-[0.2em] uppercase text-accent">
                           {product.model}

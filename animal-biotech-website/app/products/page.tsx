@@ -34,6 +34,7 @@ export default async function ProductsPage() {
           features: Array.isArray(p.features) ? p.features : [],
           specs: (typeof p.specs === "object" && p.specs !== null ? p.specs : {}) as Record<string, string>,
           highlight: p.is_highlighted || false,
+          image: p.image || null,
         })),
       }))
     : defaultProductCategories
