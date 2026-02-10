@@ -1,3 +1,5 @@
+export const revalidate = 60 // ISR: revalidate every 60 seconds
+
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { AboutSection } from "@/components/about-section"

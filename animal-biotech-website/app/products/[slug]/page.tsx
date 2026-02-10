@@ -1,3 +1,5 @@
+export const revalidate = 60 // ISR: revalidate every 60 seconds
+
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"

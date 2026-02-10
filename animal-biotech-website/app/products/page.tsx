@@ -5,6 +5,8 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ProductsPageClient } from "./products-client"
 
+export const revalidate = 60 // ISR: revalidate every 60 seconds
+
 export const metadata = {
   title: "產品與服務 | 上弦動物生技",
   description: "瀏覽上弦動物生技的完整產品線：診斷設備、快篩試劑、傷口護理及手術耗材。",
