@@ -39,5 +39,18 @@ next-env.d.ts
 nul
 *.csv
 
+# sensitive scripts (contain hardcoded keys - never commit)
+scripts/update-env.js
+scripts/check-auth.js
+scripts/verify-database.js
+scripts/verify-db-simple.js
+scripts/test-direct-pg.js
+scripts/traceability-data.json
+.env.production
+
+# session artifacts
+SESSION_SUMMARY.md
+DEPLOYMENT_TROUBLESHOOTING_REPORT.md
+
 # git standalone
 .git-standalone/
